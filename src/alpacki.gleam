@@ -8,8 +8,8 @@ pub type DecodeError {
 
 /// Decodes an integer used to represent name indexes, header field indexes,
 /// or string lengths. It accepts a BitArray starting at the byte containing the
-/// prefix, and the number of bits of the prefix (N). Returns the decoded
-/// integer with the remaining BitArray data or a decode error.
+/// prefix, and the number of bits of the prefix (N). Returns either the decoded
+/// integer with the remaining BitArray data, or a decode error.
 ///
 /// The prefix size is always between 1 and 8 bits. Passing another integer will
 /// cause a panic!
@@ -34,8 +34,8 @@ pub type DecodeError {
 /// If the integer is too big to be encoded within the N-bit prefix, all the
 /// bits of the prefix are set to 1, the value, decreased by 2^N-1, is encoded
 /// using a list of one or more octets, and the most significant bit of each
-/// octet is used as a continuation flag. (The flag is set to 1 except for the
-/// last octet in the list).
+/// octet is used as a continuation flag. The flag is set to 1 for all octets
+/// except the last one in the list.
 ///
 /// Example: integer value encoded after the prefix for N = 5:
 /// ```
@@ -103,7 +103,7 @@ fn decode_integer_after_prefix(
 }
 
 /// Encodes an integer used to represent name indexes, header field indexes,
-/// or string lengths. It accepts an integer to encode, and the number of bits
+/// or string lengths. It accepts an integer to encode and the number of bits
 /// of the prefix (N). Returns the encoded BitArray.
 ///
 /// The prefix size is always between 1 and 8 bits. Passing another integer will
@@ -129,8 +129,8 @@ fn decode_integer_after_prefix(
 /// If the integer is too big to be encoded within the N-bit prefix, all the
 /// bits of the prefix are set to 1, the value, decreased by 2^N-1, is encoded
 /// using a list of one or more octets, and the most significant bit of each
-/// octet is used as a continuation flag. (The flag is set to 1 except for the
-/// last octet in the list).
+/// octet is used as a continuation flag. The flag is set to 1 for all octets
+/// except the last one in the list.
 ///
 /// Example: integer value encoded after the prefix for N = 5:
 /// ```
