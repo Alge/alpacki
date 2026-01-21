@@ -10,7 +10,7 @@ import exception
 // | X | X | X | 0 | 1 | 0 | 1 | 0 |
 // +---+---+---+---+---+---+---+---+
 pub fn decode_integer_within_prefix_test() {
-  assert alpacki.decode_integer(<<0b00001010:8>>, 5) == Ok(#(10, <<>>))
+  assert alpacki.decode_integer(<<0b00001010:8>>, prefix: 5) == Ok(#(10, <<>>))
 }
 
 // Integer 20, encoded with a 5-bit prefix + additional bits:
@@ -21,7 +21,7 @@ pub fn decode_integer_within_prefix_test() {
 // | 0 | 1 | 0 |                   |
 // +---+---+---+---+---+---+---+---+
 pub fn decode_integer_within_prefix_test_with_remaining_test() {
-  assert alpacki.decode_integer(<<0b00010100:8, 0b010:3>>, 5)
+  assert alpacki.decode_integer(<<0b00010100:8, 0b010:3>>, prefix: 5)
     == Ok(#(20, <<0b010:3>>))
 }
 
@@ -31,7 +31,8 @@ pub fn decode_integer_within_prefix_test_with_remaining_test() {
 // | X | X | X | 1 | 1 | 1 | 1 |   |
 // +---+---+---+---+---+---+---+---+
 pub fn decode_integer_within_prefix_incomplete_test() {
-  assert alpacki.decode_integer(<<0b0001111:7>>, 5) == Error(alpacki.Incomplete)
+  assert alpacki.decode_integer(<<0b0001111:7>>, prefix: 5)
+    == Error(alpacki.Incomplete)
 }
 
 // Integer 16, to be encoded with a 6-bit prefix:
@@ -40,7 +41,7 @@ pub fn decode_integer_within_prefix_incomplete_test() {
 // | X | X | 0 | 1 | 0 | 0 | 0 | 0 |
 // +---+---+---+---+---+---+---+---+
 pub fn encode_integer_within_prefix_test() {
-  assert alpacki.encode_integer(16, 6) == <<0b00010000:8>>
+  assert alpacki.encode_integer(16, prefix: 6) == <<0b00010000:8>>
 }
 
 // Integer 1337, encoded with a 5-bit prefix:
@@ -53,7 +54,10 @@ pub fn encode_integer_within_prefix_test() {
 // | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 |
 // +---+---+---+---+---+---+---+---+
 pub fn decode_integer_after_prefix_test() {
-  assert alpacki.decode_integer(<<0b00011111:8, 0b10011010:8, 0b00001010:8>>, 5)
+  assert alpacki.decode_integer(
+      <<0b00011111:8, 0b10011010:8, 0b00001010:8>>,
+      prefix: 5,
+    )
     == Ok(#(1337, <<>>))
 }
 
@@ -71,7 +75,7 @@ pub fn decode_integer_after_prefix_test() {
 pub fn decode_integer_after_prefix_test_with_remaining_test() {
   assert alpacki.decode_integer(
       <<0b00001111:8, 0b11101011:8, 0b00001011:8, 0b11001:5>>,
-      4,
+      prefix: 4,
     )
     == Ok(#(1530, <<0b11001:5>>))
 }
@@ -85,7 +89,7 @@ pub fn decode_integer_after_prefix_test_with_remaining_test() {
 // | 1 | 1 | 1 | 0 |               |
 // +---+---+---+---+---+---+---+---+
 pub fn decode_integer_after_prefix_incomplete_test() {
-  assert alpacki.decode_integer(<<0b00000011:8, 0b1110:5>>, 2)
+  assert alpacki.decode_integer(<<0b00000011:8, 0b1110:5>>, prefix: 2)
     == Error(alpacki.Incomplete)
 }
 
@@ -115,7 +119,7 @@ pub fn decode_integer_after_prefix_overflow_test() {
         0b10000000:8,
         0b10000001:8,
       >>,
-      5,
+      prefix: 5,
     )
     == Error(alpacki.IntegerOverflow)
 }
@@ -130,7 +134,7 @@ pub fn decode_integer_after_prefix_overflow_test() {
 // | 0 | 0 | 0 | 0 | 1 | 1 | 1 | 1 |
 // +---+---+---+---+---+---+---+---+
 pub fn encode_integer_after_prefix_test() {
-  assert alpacki.encode_integer(2026, 1)
+  assert alpacki.encode_integer(2026, prefix: 1)
     == <<0b00000001:8, 0b11101001:8, 0b00001111:8>>
 }
 
@@ -140,7 +144,7 @@ pub fn encode_integer_after_prefix_test() {
 // | 0 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |
 // +---+---+---+---+---+---+---+---+
 pub fn decode_integer_starting_at_octet_boundary_test() {
-  assert alpacki.decode_integer(<<0b00101010:8>>, 8) == Ok(#(42, <<>>))
+  assert alpacki.decode_integer(<<0b00101010:8>>, prefix: 8) == Ok(#(42, <<>>))
 }
 
 // BitArray, that is 8+ bits in size, with a prefix not between 1 and 8:
@@ -153,12 +157,12 @@ pub fn decode_integer_starting_at_octet_boundary_test() {
 pub fn decode_integer_invalid_prefix_bits_test() {
   let assert Error(exception.Errored(_dynamic)) =
     exception.rescue(fn() {
-      alpacki.decode_integer(<<0b11111111:8, 0b111:3>>, 9)
+      alpacki.decode_integer(<<0b11111111:8, 0b111:3>>, prefix: 9)
     })
 }
 
 // Integer 22, to be encoded with a prefix not between 1 and 8.
 pub fn encode_integer_invalid_prefix_bits_test() {
   let assert Error(exception.Errored(_dynamic)) =
-    exception.rescue(fn() { alpacki.encode_integer(22, -1) })
+    exception.rescue(fn() { alpacki.encode_integer(22, prefix: -1) })
 }

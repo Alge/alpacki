@@ -8,524 +8,524 @@ pub type HuffmanError {
 }
 
 /// Decodes Huffman-encoded data (RFC 7541 Appendix B)
-pub fn huffman_decode(
+pub fn decode(
   bits: BitArray,
   accumulated: BitArray,
 ) -> Result(BitArray, HuffmanError) {
   case bits {
     <<0x3ffffffc:30, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 10>>)
+      decode(remaining, <<accumulated:bits, 10>>)
     <<0x3ffffffd:30, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 13>>)
+      decode(remaining, <<accumulated:bits, 13>>)
     <<0x3ffffffe:30, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 22>>)
+      decode(remaining, <<accumulated:bits, 22>>)
     <<0x3fffffff:30, _:bits>> -> Error(EOSSymbolInData)
     <<0xfffffe2:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 2>>)
+      decode(remaining, <<accumulated:bits, 2>>)
     <<0xfffffe3:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 3>>)
+      decode(remaining, <<accumulated:bits, 3>>)
     <<0xfffffe4:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 4>>)
+      decode(remaining, <<accumulated:bits, 4>>)
     <<0xfffffe5:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 5>>)
+      decode(remaining, <<accumulated:bits, 5>>)
     <<0xfffffe6:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 6>>)
+      decode(remaining, <<accumulated:bits, 6>>)
     <<0xfffffe7:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 7>>)
+      decode(remaining, <<accumulated:bits, 7>>)
     <<0xfffffe8:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 8>>)
+      decode(remaining, <<accumulated:bits, 8>>)
     <<0xfffffe9:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 11>>)
+      decode(remaining, <<accumulated:bits, 11>>)
     <<0xfffffea:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 12>>)
+      decode(remaining, <<accumulated:bits, 12>>)
     <<0xfffffeb:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 14>>)
+      decode(remaining, <<accumulated:bits, 14>>)
     <<0xfffffec:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 15>>)
+      decode(remaining, <<accumulated:bits, 15>>)
     <<0xfffffed:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 16>>)
+      decode(remaining, <<accumulated:bits, 16>>)
     <<0xfffffee:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 17>>)
+      decode(remaining, <<accumulated:bits, 17>>)
     <<0xfffffef:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 18>>)
+      decode(remaining, <<accumulated:bits, 18>>)
     <<0xffffff0:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 19>>)
+      decode(remaining, <<accumulated:bits, 19>>)
     <<0xffffff1:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 20>>)
+      decode(remaining, <<accumulated:bits, 20>>)
     <<0xffffff2:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 21>>)
+      decode(remaining, <<accumulated:bits, 21>>)
     <<0xffffff3:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 23>>)
+      decode(remaining, <<accumulated:bits, 23>>)
     <<0xffffff4:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 24>>)
+      decode(remaining, <<accumulated:bits, 24>>)
     <<0xffffff5:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 25>>)
+      decode(remaining, <<accumulated:bits, 25>>)
     <<0xffffff6:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 26>>)
+      decode(remaining, <<accumulated:bits, 26>>)
     <<0xffffff7:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 27>>)
+      decode(remaining, <<accumulated:bits, 27>>)
     <<0xffffff8:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 28>>)
+      decode(remaining, <<accumulated:bits, 28>>)
     <<0xffffff9:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 29>>)
+      decode(remaining, <<accumulated:bits, 29>>)
     <<0xffffffa:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 30>>)
+      decode(remaining, <<accumulated:bits, 30>>)
     <<0xffffffb:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 31>>)
+      decode(remaining, <<accumulated:bits, 31>>)
     <<0xffffffc:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 127>>)
+      decode(remaining, <<accumulated:bits, 127>>)
     <<0xffffffd:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 220>>)
+      decode(remaining, <<accumulated:bits, 220>>)
     <<0xffffffe:28, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 249>>)
+      decode(remaining, <<accumulated:bits, 249>>)
     <<0x7ffffde:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 203>>)
+      decode(remaining, <<accumulated:bits, 203>>)
     <<0x7ffffdf:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 204>>)
+      decode(remaining, <<accumulated:bits, 204>>)
     <<0x7ffffe0:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 211>>)
+      decode(remaining, <<accumulated:bits, 211>>)
     <<0x7ffffe1:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 212>>)
+      decode(remaining, <<accumulated:bits, 212>>)
     <<0x7ffffe2:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 214>>)
+      decode(remaining, <<accumulated:bits, 214>>)
     <<0x7ffffe3:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 221>>)
+      decode(remaining, <<accumulated:bits, 221>>)
     <<0x7ffffe4:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 222>>)
+      decode(remaining, <<accumulated:bits, 222>>)
     <<0x7ffffe5:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 223>>)
+      decode(remaining, <<accumulated:bits, 223>>)
     <<0x7ffffe6:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 241>>)
+      decode(remaining, <<accumulated:bits, 241>>)
     <<0x7ffffe7:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 244>>)
+      decode(remaining, <<accumulated:bits, 244>>)
     <<0x7ffffe8:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 245>>)
+      decode(remaining, <<accumulated:bits, 245>>)
     <<0x7ffffe9:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 246>>)
+      decode(remaining, <<accumulated:bits, 246>>)
     <<0x7ffffea:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 247>>)
+      decode(remaining, <<accumulated:bits, 247>>)
     <<0x7ffffeb:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 248>>)
+      decode(remaining, <<accumulated:bits, 248>>)
     <<0x7ffffec:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 250>>)
+      decode(remaining, <<accumulated:bits, 250>>)
     <<0x7ffffed:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 251>>)
+      decode(remaining, <<accumulated:bits, 251>>)
     <<0x7ffffee:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 252>>)
+      decode(remaining, <<accumulated:bits, 252>>)
     <<0x7ffffef:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 253>>)
+      decode(remaining, <<accumulated:bits, 253>>)
     <<0x7fffff0:27, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 254>>)
+      decode(remaining, <<accumulated:bits, 254>>)
     <<0x3ffffe0:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 192>>)
+      decode(remaining, <<accumulated:bits, 192>>)
     <<0x3ffffe1:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 193>>)
+      decode(remaining, <<accumulated:bits, 193>>)
     <<0x3ffffe2:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 200>>)
+      decode(remaining, <<accumulated:bits, 200>>)
     <<0x3ffffe3:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 201>>)
+      decode(remaining, <<accumulated:bits, 201>>)
     <<0x3ffffe4:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 202>>)
+      decode(remaining, <<accumulated:bits, 202>>)
     <<0x3ffffe5:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 205>>)
+      decode(remaining, <<accumulated:bits, 205>>)
     <<0x3ffffe6:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 210>>)
+      decode(remaining, <<accumulated:bits, 210>>)
     <<0x3ffffe7:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 213>>)
+      decode(remaining, <<accumulated:bits, 213>>)
     <<0x3ffffe8:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 218>>)
+      decode(remaining, <<accumulated:bits, 218>>)
     <<0x3ffffe9:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 219>>)
+      decode(remaining, <<accumulated:bits, 219>>)
     <<0x3ffffea:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 238>>)
+      decode(remaining, <<accumulated:bits, 238>>)
     <<0x3ffffeb:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 240>>)
+      decode(remaining, <<accumulated:bits, 240>>)
     <<0x3ffffec:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 242>>)
+      decode(remaining, <<accumulated:bits, 242>>)
     <<0x3ffffed:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 243>>)
+      decode(remaining, <<accumulated:bits, 243>>)
     <<0x3ffffee:26, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 255>>)
+      decode(remaining, <<accumulated:bits, 255>>)
     <<0x1ffffec:25, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 199>>)
+      decode(remaining, <<accumulated:bits, 199>>)
     <<0x1ffffed:25, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 207>>)
+      decode(remaining, <<accumulated:bits, 207>>)
     <<0x1ffffee:25, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 234>>)
+      decode(remaining, <<accumulated:bits, 234>>)
     <<0x1ffffef:25, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 235>>)
+      decode(remaining, <<accumulated:bits, 235>>)
     <<0xffffea:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 9>>)
+      decode(remaining, <<accumulated:bits, 9>>)
     <<0xffffeb:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 142>>)
+      decode(remaining, <<accumulated:bits, 142>>)
     <<0xffffec:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 144>>)
+      decode(remaining, <<accumulated:bits, 144>>)
     <<0xffffed:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 145>>)
+      decode(remaining, <<accumulated:bits, 145>>)
     <<0xffffee:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 148>>)
+      decode(remaining, <<accumulated:bits, 148>>)
     <<0xffffef:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 159>>)
+      decode(remaining, <<accumulated:bits, 159>>)
     <<0xfffff0:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 171>>)
+      decode(remaining, <<accumulated:bits, 171>>)
     <<0xfffff1:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 206>>)
+      decode(remaining, <<accumulated:bits, 206>>)
     <<0xfffff2:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 215>>)
+      decode(remaining, <<accumulated:bits, 215>>)
     <<0xfffff3:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 225>>)
+      decode(remaining, <<accumulated:bits, 225>>)
     <<0xfffff4:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 236>>)
+      decode(remaining, <<accumulated:bits, 236>>)
     <<0xfffff5:24, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 237>>)
+      decode(remaining, <<accumulated:bits, 237>>)
     <<0x7fffd8:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 1>>)
+      decode(remaining, <<accumulated:bits, 1>>)
     <<0x7fffd9:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 135>>)
+      decode(remaining, <<accumulated:bits, 135>>)
     <<0x7fffda:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 137>>)
+      decode(remaining, <<accumulated:bits, 137>>)
     <<0x7fffdb:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 138>>)
+      decode(remaining, <<accumulated:bits, 138>>)
     <<0x7fffdc:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 139>>)
+      decode(remaining, <<accumulated:bits, 139>>)
     <<0x7fffdd:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 140>>)
+      decode(remaining, <<accumulated:bits, 140>>)
     <<0x7fffde:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 141>>)
+      decode(remaining, <<accumulated:bits, 141>>)
     <<0x7fffdf:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 143>>)
+      decode(remaining, <<accumulated:bits, 143>>)
     <<0x7fffe0:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 147>>)
+      decode(remaining, <<accumulated:bits, 147>>)
     <<0x7fffe1:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 149>>)
+      decode(remaining, <<accumulated:bits, 149>>)
     <<0x7fffe2:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 150>>)
+      decode(remaining, <<accumulated:bits, 150>>)
     <<0x7fffe3:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 151>>)
+      decode(remaining, <<accumulated:bits, 151>>)
     <<0x7fffe4:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 152>>)
+      decode(remaining, <<accumulated:bits, 152>>)
     <<0x7fffe5:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 155>>)
+      decode(remaining, <<accumulated:bits, 155>>)
     <<0x7fffe6:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 157>>)
+      decode(remaining, <<accumulated:bits, 157>>)
     <<0x7fffe7:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 158>>)
+      decode(remaining, <<accumulated:bits, 158>>)
     <<0x7fffe8:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 165>>)
+      decode(remaining, <<accumulated:bits, 165>>)
     <<0x7fffe9:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 166>>)
+      decode(remaining, <<accumulated:bits, 166>>)
     <<0x7fffea:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 168>>)
+      decode(remaining, <<accumulated:bits, 168>>)
     <<0x7fffeb:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 174>>)
+      decode(remaining, <<accumulated:bits, 174>>)
     <<0x7fffec:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 175>>)
+      decode(remaining, <<accumulated:bits, 175>>)
     <<0x7fffed:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 180>>)
+      decode(remaining, <<accumulated:bits, 180>>)
     <<0x7fffee:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 182>>)
+      decode(remaining, <<accumulated:bits, 182>>)
     <<0x7fffef:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 183>>)
+      decode(remaining, <<accumulated:bits, 183>>)
     <<0x7ffff0:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 188>>)
+      decode(remaining, <<accumulated:bits, 188>>)
     <<0x7ffff1:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 191>>)
+      decode(remaining, <<accumulated:bits, 191>>)
     <<0x7ffff2:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 197>>)
+      decode(remaining, <<accumulated:bits, 197>>)
     <<0x7ffff3:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 231>>)
+      decode(remaining, <<accumulated:bits, 231>>)
     <<0x7ffff4:23, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 239>>)
+      decode(remaining, <<accumulated:bits, 239>>)
     <<0x3fffd2:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 129>>)
+      decode(remaining, <<accumulated:bits, 129>>)
     <<0x3fffd3:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 132>>)
+      decode(remaining, <<accumulated:bits, 132>>)
     <<0x3fffd4:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 133>>)
+      decode(remaining, <<accumulated:bits, 133>>)
     <<0x3fffd5:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 134>>)
+      decode(remaining, <<accumulated:bits, 134>>)
     <<0x3fffd6:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 136>>)
+      decode(remaining, <<accumulated:bits, 136>>)
     <<0x3fffd7:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 146>>)
+      decode(remaining, <<accumulated:bits, 146>>)
     <<0x3fffd8:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 154>>)
+      decode(remaining, <<accumulated:bits, 154>>)
     <<0x3fffd9:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 156>>)
+      decode(remaining, <<accumulated:bits, 156>>)
     <<0x3fffda:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 160>>)
+      decode(remaining, <<accumulated:bits, 160>>)
     <<0x3fffdb:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 163>>)
+      decode(remaining, <<accumulated:bits, 163>>)
     <<0x3fffdc:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 164>>)
+      decode(remaining, <<accumulated:bits, 164>>)
     <<0x3fffdd:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 169>>)
+      decode(remaining, <<accumulated:bits, 169>>)
     <<0x3fffde:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 170>>)
+      decode(remaining, <<accumulated:bits, 170>>)
     <<0x3fffdf:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 173>>)
+      decode(remaining, <<accumulated:bits, 173>>)
     <<0x3fffe0:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 178>>)
+      decode(remaining, <<accumulated:bits, 178>>)
     <<0x3fffe1:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 181>>)
+      decode(remaining, <<accumulated:bits, 181>>)
     <<0x3fffe2:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 185>>)
+      decode(remaining, <<accumulated:bits, 185>>)
     <<0x3fffe3:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 186>>)
+      decode(remaining, <<accumulated:bits, 186>>)
     <<0x3fffe4:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 187>>)
+      decode(remaining, <<accumulated:bits, 187>>)
     <<0x3fffe5:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 189>>)
+      decode(remaining, <<accumulated:bits, 189>>)
     <<0x3fffe6:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 190>>)
+      decode(remaining, <<accumulated:bits, 190>>)
     <<0x3fffe7:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 196>>)
+      decode(remaining, <<accumulated:bits, 196>>)
     <<0x3fffe8:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 198>>)
+      decode(remaining, <<accumulated:bits, 198>>)
     <<0x3fffe9:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 228>>)
+      decode(remaining, <<accumulated:bits, 228>>)
     <<0x3fffea:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 232>>)
+      decode(remaining, <<accumulated:bits, 232>>)
     <<0x3fffeb:22, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 233>>)
+      decode(remaining, <<accumulated:bits, 233>>)
     <<0x1fffdc:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 153>>)
+      decode(remaining, <<accumulated:bits, 153>>)
     <<0x1fffdd:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 161>>)
+      decode(remaining, <<accumulated:bits, 161>>)
     <<0x1fffde:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 167>>)
+      decode(remaining, <<accumulated:bits, 167>>)
     <<0x1fffdf:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 172>>)
+      decode(remaining, <<accumulated:bits, 172>>)
     <<0x1fffe0:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 176>>)
+      decode(remaining, <<accumulated:bits, 176>>)
     <<0x1fffe1:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 177>>)
+      decode(remaining, <<accumulated:bits, 177>>)
     <<0x1fffe2:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 179>>)
+      decode(remaining, <<accumulated:bits, 179>>)
     <<0x1fffe3:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 209>>)
+      decode(remaining, <<accumulated:bits, 209>>)
     <<0x1fffe4:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 216>>)
+      decode(remaining, <<accumulated:bits, 216>>)
     <<0x1fffe5:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 217>>)
+      decode(remaining, <<accumulated:bits, 217>>)
     <<0x1fffe6:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 227>>)
+      decode(remaining, <<accumulated:bits, 227>>)
     <<0x1fffe7:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 229>>)
+      decode(remaining, <<accumulated:bits, 229>>)
     <<0x1fffe8:21, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 230>>)
+      decode(remaining, <<accumulated:bits, 230>>)
     <<0xfffe6:20, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 128>>)
+      decode(remaining, <<accumulated:bits, 128>>)
     <<0xfffe7:20, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 130>>)
+      decode(remaining, <<accumulated:bits, 130>>)
     <<0xfffe8:20, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 131>>)
+      decode(remaining, <<accumulated:bits, 131>>)
     <<0xfffe9:20, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 162>>)
+      decode(remaining, <<accumulated:bits, 162>>)
     <<0xfffea:20, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 184>>)
+      decode(remaining, <<accumulated:bits, 184>>)
     <<0xfffeb:20, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 194>>)
+      decode(remaining, <<accumulated:bits, 194>>)
     <<0xfffec:20, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 224>>)
+      decode(remaining, <<accumulated:bits, 224>>)
     <<0xfffed:20, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 226>>)
+      decode(remaining, <<accumulated:bits, 226>>)
     <<0x7fff0:19, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 92>>)
+      decode(remaining, <<accumulated:bits, 92>>)
     <<0x7fff1:19, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 195>>)
+      decode(remaining, <<accumulated:bits, 195>>)
     <<0x7fff2:19, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 208>>)
+      decode(remaining, <<accumulated:bits, 208>>)
     <<0x7ffc:15, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 60>>)
+      decode(remaining, <<accumulated:bits, 60>>)
     <<0x7ffd:15, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 96>>)
+      decode(remaining, <<accumulated:bits, 96>>)
     <<0x7ffe:15, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 123>>)
+      decode(remaining, <<accumulated:bits, 123>>)
     <<0x3ffc:14, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 94>>)
+      decode(remaining, <<accumulated:bits, 94>>)
     <<0x3ffd:14, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 125>>)
+      decode(remaining, <<accumulated:bits, 125>>)
     <<0x1ff8:13, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 0>>)
+      decode(remaining, <<accumulated:bits, 0>>)
     <<0x1ff9:13, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 36>>)
+      decode(remaining, <<accumulated:bits, 36>>)
     <<0x1ffa:13, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 64>>)
+      decode(remaining, <<accumulated:bits, 64>>)
     <<0x1ffb:13, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 91>>)
+      decode(remaining, <<accumulated:bits, 91>>)
     <<0x1ffc:13, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 93>>)
+      decode(remaining, <<accumulated:bits, 93>>)
     <<0x1ffd:13, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 126>>)
+      decode(remaining, <<accumulated:bits, 126>>)
     <<0xffa:12, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 35>>)
+      decode(remaining, <<accumulated:bits, 35>>)
     <<0xffb:12, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 62>>)
+      decode(remaining, <<accumulated:bits, 62>>)
     <<0x7fa:11, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 39>>)
+      decode(remaining, <<accumulated:bits, 39>>)
     <<0x7fb:11, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 43>>)
+      decode(remaining, <<accumulated:bits, 43>>)
     <<0x7fc:11, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 124>>)
+      decode(remaining, <<accumulated:bits, 124>>)
     <<0x3f8:10, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 33>>)
+      decode(remaining, <<accumulated:bits, 33>>)
     <<0x3f9:10, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 34>>)
+      decode(remaining, <<accumulated:bits, 34>>)
     <<0x3fa:10, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 40>>)
+      decode(remaining, <<accumulated:bits, 40>>)
     <<0x3fb:10, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 41>>)
+      decode(remaining, <<accumulated:bits, 41>>)
     <<0x3fc:10, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 63>>)
+      decode(remaining, <<accumulated:bits, 63>>)
     <<0xf8:8, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 38>>)
+      decode(remaining, <<accumulated:bits, 38>>)
     <<0xf9:8, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 42>>)
+      decode(remaining, <<accumulated:bits, 42>>)
     <<0xfa:8, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 44>>)
+      decode(remaining, <<accumulated:bits, 44>>)
     <<0xfb:8, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 59>>)
+      decode(remaining, <<accumulated:bits, 59>>)
     <<0xfc:8, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 88>>)
+      decode(remaining, <<accumulated:bits, 88>>)
     <<0xfd:8, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 90>>)
+      decode(remaining, <<accumulated:bits, 90>>)
     <<0x5c:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 58>>)
+      decode(remaining, <<accumulated:bits, 58>>)
     <<0x5d:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 66>>)
+      decode(remaining, <<accumulated:bits, 66>>)
     <<0x5e:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 67>>)
+      decode(remaining, <<accumulated:bits, 67>>)
     <<0x5f:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 68>>)
+      decode(remaining, <<accumulated:bits, 68>>)
     <<0x60:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 69>>)
+      decode(remaining, <<accumulated:bits, 69>>)
     <<0x61:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 70>>)
+      decode(remaining, <<accumulated:bits, 70>>)
     <<0x62:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 71>>)
+      decode(remaining, <<accumulated:bits, 71>>)
     <<0x63:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 72>>)
+      decode(remaining, <<accumulated:bits, 72>>)
     <<0x64:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 73>>)
+      decode(remaining, <<accumulated:bits, 73>>)
     <<0x65:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 74>>)
+      decode(remaining, <<accumulated:bits, 74>>)
     <<0x66:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 75>>)
+      decode(remaining, <<accumulated:bits, 75>>)
     <<0x67:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 76>>)
+      decode(remaining, <<accumulated:bits, 76>>)
     <<0x68:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 77>>)
+      decode(remaining, <<accumulated:bits, 77>>)
     <<0x69:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 78>>)
+      decode(remaining, <<accumulated:bits, 78>>)
     <<0x6a:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 79>>)
+      decode(remaining, <<accumulated:bits, 79>>)
     <<0x6b:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 80>>)
+      decode(remaining, <<accumulated:bits, 80>>)
     <<0x6c:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 81>>)
+      decode(remaining, <<accumulated:bits, 81>>)
     <<0x6d:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 82>>)
+      decode(remaining, <<accumulated:bits, 82>>)
     <<0x6e:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 83>>)
+      decode(remaining, <<accumulated:bits, 83>>)
     <<0x6f:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 84>>)
+      decode(remaining, <<accumulated:bits, 84>>)
     <<0x70:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 85>>)
+      decode(remaining, <<accumulated:bits, 85>>)
     <<0x71:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 86>>)
+      decode(remaining, <<accumulated:bits, 86>>)
     <<0x72:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 87>>)
+      decode(remaining, <<accumulated:bits, 87>>)
     <<0x73:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 89>>)
+      decode(remaining, <<accumulated:bits, 89>>)
     <<0x74:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 106>>)
+      decode(remaining, <<accumulated:bits, 106>>)
     <<0x75:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 107>>)
+      decode(remaining, <<accumulated:bits, 107>>)
     <<0x76:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 113>>)
+      decode(remaining, <<accumulated:bits, 113>>)
     <<0x77:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 118>>)
+      decode(remaining, <<accumulated:bits, 118>>)
     <<0x78:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 119>>)
+      decode(remaining, <<accumulated:bits, 119>>)
     <<0x79:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 120>>)
+      decode(remaining, <<accumulated:bits, 120>>)
     <<0x7a:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 121>>)
+      decode(remaining, <<accumulated:bits, 121>>)
     <<0x7b:7, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 122>>)
+      decode(remaining, <<accumulated:bits, 122>>)
     <<0x14:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 32>>)
+      decode(remaining, <<accumulated:bits, 32>>)
     <<0x15:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 37>>)
+      decode(remaining, <<accumulated:bits, 37>>)
     <<0x16:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 45>>)
+      decode(remaining, <<accumulated:bits, 45>>)
     <<0x17:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 46>>)
+      decode(remaining, <<accumulated:bits, 46>>)
     <<0x18:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 47>>)
+      decode(remaining, <<accumulated:bits, 47>>)
     <<0x19:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 51>>)
+      decode(remaining, <<accumulated:bits, 51>>)
     <<0x1a:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 52>>)
+      decode(remaining, <<accumulated:bits, 52>>)
     <<0x1b:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 53>>)
+      decode(remaining, <<accumulated:bits, 53>>)
     <<0x1c:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 54>>)
+      decode(remaining, <<accumulated:bits, 54>>)
     <<0x1d:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 55>>)
+      decode(remaining, <<accumulated:bits, 55>>)
     <<0x1e:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 56>>)
+      decode(remaining, <<accumulated:bits, 56>>)
     <<0x1f:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 57>>)
+      decode(remaining, <<accumulated:bits, 57>>)
     <<0x20:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 61>>)
+      decode(remaining, <<accumulated:bits, 61>>)
     <<0x21:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 65>>)
+      decode(remaining, <<accumulated:bits, 65>>)
     <<0x22:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 95>>)
+      decode(remaining, <<accumulated:bits, 95>>)
     <<0x23:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 98>>)
+      decode(remaining, <<accumulated:bits, 98>>)
     <<0x24:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 100>>)
+      decode(remaining, <<accumulated:bits, 100>>)
     <<0x25:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 102>>)
+      decode(remaining, <<accumulated:bits, 102>>)
     <<0x26:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 103>>)
+      decode(remaining, <<accumulated:bits, 103>>)
     <<0x27:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 104>>)
+      decode(remaining, <<accumulated:bits, 104>>)
     <<0x28:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 108>>)
+      decode(remaining, <<accumulated:bits, 108>>)
     <<0x29:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 109>>)
+      decode(remaining, <<accumulated:bits, 109>>)
     <<0x2a:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 110>>)
+      decode(remaining, <<accumulated:bits, 110>>)
     <<0x2b:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 112>>)
+      decode(remaining, <<accumulated:bits, 112>>)
     <<0x2c:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 114>>)
+      decode(remaining, <<accumulated:bits, 114>>)
     <<0x2d:6, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 117>>)
+      decode(remaining, <<accumulated:bits, 117>>)
     <<0x0:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 48>>)
+      decode(remaining, <<accumulated:bits, 48>>)
     <<0x1:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 49>>)
+      decode(remaining, <<accumulated:bits, 49>>)
     <<0x2:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 50>>)
+      decode(remaining, <<accumulated:bits, 50>>)
     <<0x3:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 97>>)
+      decode(remaining, <<accumulated:bits, 97>>)
     <<0x4:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 99>>)
+      decode(remaining, <<accumulated:bits, 99>>)
     <<0x5:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 101>>)
+      decode(remaining, <<accumulated:bits, 101>>)
     <<0x6:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 105>>)
+      decode(remaining, <<accumulated:bits, 105>>)
     <<0x7:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 111>>)
+      decode(remaining, <<accumulated:bits, 111>>)
     <<0x8:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 115>>)
+      decode(remaining, <<accumulated:bits, 115>>)
     <<0x9:5, remaining:bits>> ->
-      huffman_decode(remaining, <<accumulated:bits, 116>>)
+      decode(remaining, <<accumulated:bits, 116>>)
     <<>> -> Ok(accumulated)
     // Valid EOS padding (1-7 bits, all 1s)
     <<0b1:1>> -> Ok(accumulated)
@@ -540,520 +540,520 @@ pub fn huffman_decode(
 }
 
 /// Encodes data using Huffman encoding (RFC 7541 Appendix B)
-pub fn huffman_encode(data: BitArray, accumulated: BitArray) -> BitArray {
+pub fn encode(data: BitArray, accumulated: BitArray) -> BitArray {
   case data {
     <<0, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ff8:13>>)
+      encode(remaining, <<accumulated:bits, 0x1ff8:13>>)
     <<1, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffd8:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffd8:23>>)
     <<2, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffe2:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffe2:28>>)
     <<3, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffe3:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffe3:28>>)
     <<4, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffe4:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffe4:28>>)
     <<5, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffe5:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffe5:28>>)
     <<6, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffe6:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffe6:28>>)
     <<7, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffe7:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffe7:28>>)
     <<8, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffe8:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffe8:28>>)
     <<9, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffea:24>>)
+      encode(remaining, <<accumulated:bits, 0xffffea:24>>)
     <<10, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffffc:30>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffffc:30>>)
     <<11, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffe9:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffe9:28>>)
     <<12, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffea:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffea:28>>)
     <<13, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffffd:30>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffffd:30>>)
     <<14, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffeb:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffeb:28>>)
     <<15, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffec:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffec:28>>)
     <<16, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffed:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffed:28>>)
     <<17, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffee:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffee:28>>)
     <<18, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffffef:28>>)
+      encode(remaining, <<accumulated:bits, 0xfffffef:28>>)
     <<19, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff0:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff0:28>>)
     <<20, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff1:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff1:28>>)
     <<21, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff2:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff2:28>>)
     <<22, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffffe:30>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffffe:30>>)
     <<23, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff3:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff3:28>>)
     <<24, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff4:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff4:28>>)
     <<25, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff5:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff5:28>>)
     <<26, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff6:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff6:28>>)
     <<27, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff7:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff7:28>>)
     <<28, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff8:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff8:28>>)
     <<29, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffff9:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffff9:28>>)
     <<30, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffffa:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffffa:28>>)
     <<31, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffffb:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffffb:28>>)
     <<32, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x14:6>>)
+      encode(remaining, <<accumulated:bits, 0x14:6>>)
     <<33, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3f8:10>>)
+      encode(remaining, <<accumulated:bits, 0x3f8:10>>)
     <<34, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3f9:10>>)
+      encode(remaining, <<accumulated:bits, 0x3f9:10>>)
     <<35, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffa:12>>)
+      encode(remaining, <<accumulated:bits, 0xffa:12>>)
     <<36, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ff9:13>>)
+      encode(remaining, <<accumulated:bits, 0x1ff9:13>>)
     <<37, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x15:6>>)
+      encode(remaining, <<accumulated:bits, 0x15:6>>)
     <<38, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xf8:8>>)
+      encode(remaining, <<accumulated:bits, 0xf8:8>>)
     <<39, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fa:11>>)
+      encode(remaining, <<accumulated:bits, 0x7fa:11>>)
     <<40, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fa:10>>)
+      encode(remaining, <<accumulated:bits, 0x3fa:10>>)
     <<41, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fb:10>>)
+      encode(remaining, <<accumulated:bits, 0x3fb:10>>)
     <<42, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xf9:8>>)
+      encode(remaining, <<accumulated:bits, 0xf9:8>>)
     <<43, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fb:11>>)
+      encode(remaining, <<accumulated:bits, 0x7fb:11>>)
     <<44, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfa:8>>)
+      encode(remaining, <<accumulated:bits, 0xfa:8>>)
     <<45, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x16:6>>)
+      encode(remaining, <<accumulated:bits, 0x16:6>>)
     <<46, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x17:6>>)
+      encode(remaining, <<accumulated:bits, 0x17:6>>)
     <<47, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x18:6>>)
+      encode(remaining, <<accumulated:bits, 0x18:6>>)
     <<48, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x0:5>>)
+      encode(remaining, <<accumulated:bits, 0x0:5>>)
     <<49, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1:5>>)
+      encode(remaining, <<accumulated:bits, 0x1:5>>)
     <<50, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x2:5>>)
+      encode(remaining, <<accumulated:bits, 0x2:5>>)
     <<51, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x19:6>>)
+      encode(remaining, <<accumulated:bits, 0x19:6>>)
     <<52, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1a:6>>)
+      encode(remaining, <<accumulated:bits, 0x1a:6>>)
     <<53, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1b:6>>)
+      encode(remaining, <<accumulated:bits, 0x1b:6>>)
     <<54, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1c:6>>)
+      encode(remaining, <<accumulated:bits, 0x1c:6>>)
     <<55, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1d:6>>)
+      encode(remaining, <<accumulated:bits, 0x1d:6>>)
     <<56, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1e:6>>)
+      encode(remaining, <<accumulated:bits, 0x1e:6>>)
     <<57, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1f:6>>)
+      encode(remaining, <<accumulated:bits, 0x1f:6>>)
     <<58, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x5c:7>>)
+      encode(remaining, <<accumulated:bits, 0x5c:7>>)
     <<59, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfb:8>>)
+      encode(remaining, <<accumulated:bits, 0xfb:8>>)
     <<60, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffc:15>>)
+      encode(remaining, <<accumulated:bits, 0x7ffc:15>>)
     <<61, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x20:6>>)
+      encode(remaining, <<accumulated:bits, 0x20:6>>)
     <<62, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffb:12>>)
+      encode(remaining, <<accumulated:bits, 0xffb:12>>)
     <<63, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fc:10>>)
+      encode(remaining, <<accumulated:bits, 0x3fc:10>>)
     <<64, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ffa:13>>)
+      encode(remaining, <<accumulated:bits, 0x1ffa:13>>)
     <<65, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x21:6>>)
+      encode(remaining, <<accumulated:bits, 0x21:6>>)
     <<66, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x5d:7>>)
+      encode(remaining, <<accumulated:bits, 0x5d:7>>)
     <<67, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x5e:7>>)
+      encode(remaining, <<accumulated:bits, 0x5e:7>>)
     <<68, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x5f:7>>)
+      encode(remaining, <<accumulated:bits, 0x5f:7>>)
     <<69, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x60:7>>)
+      encode(remaining, <<accumulated:bits, 0x60:7>>)
     <<70, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x61:7>>)
+      encode(remaining, <<accumulated:bits, 0x61:7>>)
     <<71, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x62:7>>)
+      encode(remaining, <<accumulated:bits, 0x62:7>>)
     <<72, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x63:7>>)
+      encode(remaining, <<accumulated:bits, 0x63:7>>)
     <<73, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x64:7>>)
+      encode(remaining, <<accumulated:bits, 0x64:7>>)
     <<74, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x65:7>>)
+      encode(remaining, <<accumulated:bits, 0x65:7>>)
     <<75, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x66:7>>)
+      encode(remaining, <<accumulated:bits, 0x66:7>>)
     <<76, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x67:7>>)
+      encode(remaining, <<accumulated:bits, 0x67:7>>)
     <<77, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x68:7>>)
+      encode(remaining, <<accumulated:bits, 0x68:7>>)
     <<78, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x69:7>>)
+      encode(remaining, <<accumulated:bits, 0x69:7>>)
     <<79, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x6a:7>>)
+      encode(remaining, <<accumulated:bits, 0x6a:7>>)
     <<80, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x6b:7>>)
+      encode(remaining, <<accumulated:bits, 0x6b:7>>)
     <<81, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x6c:7>>)
+      encode(remaining, <<accumulated:bits, 0x6c:7>>)
     <<82, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x6d:7>>)
+      encode(remaining, <<accumulated:bits, 0x6d:7>>)
     <<83, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x6e:7>>)
+      encode(remaining, <<accumulated:bits, 0x6e:7>>)
     <<84, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x6f:7>>)
+      encode(remaining, <<accumulated:bits, 0x6f:7>>)
     <<85, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x70:7>>)
+      encode(remaining, <<accumulated:bits, 0x70:7>>)
     <<86, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x71:7>>)
+      encode(remaining, <<accumulated:bits, 0x71:7>>)
     <<87, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x72:7>>)
+      encode(remaining, <<accumulated:bits, 0x72:7>>)
     <<88, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfc:8>>)
+      encode(remaining, <<accumulated:bits, 0xfc:8>>)
     <<89, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x73:7>>)
+      encode(remaining, <<accumulated:bits, 0x73:7>>)
     <<90, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfd:8>>)
+      encode(remaining, <<accumulated:bits, 0xfd:8>>)
     <<91, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ffb:13>>)
+      encode(remaining, <<accumulated:bits, 0x1ffb:13>>)
     <<92, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fff0:19>>)
+      encode(remaining, <<accumulated:bits, 0x7fff0:19>>)
     <<93, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ffc:13>>)
+      encode(remaining, <<accumulated:bits, 0x1ffc:13>>)
     <<94, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffc:14>>)
+      encode(remaining, <<accumulated:bits, 0x3ffc:14>>)
     <<95, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x22:6>>)
+      encode(remaining, <<accumulated:bits, 0x22:6>>)
     <<96, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffd:15>>)
+      encode(remaining, <<accumulated:bits, 0x7ffd:15>>)
     <<97, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3:5>>)
+      encode(remaining, <<accumulated:bits, 0x3:5>>)
     <<98, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x23:6>>)
+      encode(remaining, <<accumulated:bits, 0x23:6>>)
     <<99, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x4:5>>)
+      encode(remaining, <<accumulated:bits, 0x4:5>>)
     <<100, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x24:6>>)
+      encode(remaining, <<accumulated:bits, 0x24:6>>)
     <<101, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x5:5>>)
+      encode(remaining, <<accumulated:bits, 0x5:5>>)
     <<102, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x25:6>>)
+      encode(remaining, <<accumulated:bits, 0x25:6>>)
     <<103, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x26:6>>)
+      encode(remaining, <<accumulated:bits, 0x26:6>>)
     <<104, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x27:6>>)
+      encode(remaining, <<accumulated:bits, 0x27:6>>)
     <<105, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x6:5>>)
+      encode(remaining, <<accumulated:bits, 0x6:5>>)
     <<106, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x74:7>>)
+      encode(remaining, <<accumulated:bits, 0x74:7>>)
     <<107, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x75:7>>)
+      encode(remaining, <<accumulated:bits, 0x75:7>>)
     <<108, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x28:6>>)
+      encode(remaining, <<accumulated:bits, 0x28:6>>)
     <<109, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x29:6>>)
+      encode(remaining, <<accumulated:bits, 0x29:6>>)
     <<110, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x2a:6>>)
+      encode(remaining, <<accumulated:bits, 0x2a:6>>)
     <<111, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7:5>>)
+      encode(remaining, <<accumulated:bits, 0x7:5>>)
     <<112, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x2b:6>>)
+      encode(remaining, <<accumulated:bits, 0x2b:6>>)
     <<113, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x76:7>>)
+      encode(remaining, <<accumulated:bits, 0x76:7>>)
     <<114, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x2c:6>>)
+      encode(remaining, <<accumulated:bits, 0x2c:6>>)
     <<115, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x8:5>>)
+      encode(remaining, <<accumulated:bits, 0x8:5>>)
     <<116, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x9:5>>)
+      encode(remaining, <<accumulated:bits, 0x9:5>>)
     <<117, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x2d:6>>)
+      encode(remaining, <<accumulated:bits, 0x2d:6>>)
     <<118, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x77:7>>)
+      encode(remaining, <<accumulated:bits, 0x77:7>>)
     <<119, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x78:7>>)
+      encode(remaining, <<accumulated:bits, 0x78:7>>)
     <<120, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x79:7>>)
+      encode(remaining, <<accumulated:bits, 0x79:7>>)
     <<121, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7a:7>>)
+      encode(remaining, <<accumulated:bits, 0x7a:7>>)
     <<122, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7b:7>>)
+      encode(remaining, <<accumulated:bits, 0x7b:7>>)
     <<123, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffe:15>>)
+      encode(remaining, <<accumulated:bits, 0x7ffe:15>>)
     <<124, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fc:11>>)
+      encode(remaining, <<accumulated:bits, 0x7fc:11>>)
     <<125, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffd:14>>)
+      encode(remaining, <<accumulated:bits, 0x3ffd:14>>)
     <<126, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ffd:13>>)
+      encode(remaining, <<accumulated:bits, 0x1ffd:13>>)
     <<127, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffffc:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffffc:28>>)
     <<128, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffe6:20>>)
+      encode(remaining, <<accumulated:bits, 0xfffe6:20>>)
     <<129, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffd2:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffd2:22>>)
     <<130, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffe7:20>>)
+      encode(remaining, <<accumulated:bits, 0xfffe7:20>>)
     <<131, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffe8:20>>)
+      encode(remaining, <<accumulated:bits, 0xfffe8:20>>)
     <<132, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffd3:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffd3:22>>)
     <<133, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffd4:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffd4:22>>)
     <<134, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffd5:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffd5:22>>)
     <<135, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffd9:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffd9:23>>)
     <<136, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffd6:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffd6:22>>)
     <<137, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffda:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffda:23>>)
     <<138, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffdb:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffdb:23>>)
     <<139, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffdc:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffdc:23>>)
     <<140, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffdd:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffdd:23>>)
     <<141, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffde:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffde:23>>)
     <<142, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffeb:24>>)
+      encode(remaining, <<accumulated:bits, 0xffffeb:24>>)
     <<143, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffdf:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffdf:23>>)
     <<144, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffec:24>>)
+      encode(remaining, <<accumulated:bits, 0xffffec:24>>)
     <<145, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffed:24>>)
+      encode(remaining, <<accumulated:bits, 0xffffed:24>>)
     <<146, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffd7:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffd7:22>>)
     <<147, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe0:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe0:23>>)
     <<148, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffee:24>>)
+      encode(remaining, <<accumulated:bits, 0xffffee:24>>)
     <<149, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe1:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe1:23>>)
     <<150, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe2:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe2:23>>)
     <<151, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe3:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe3:23>>)
     <<152, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe4:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe4:23>>)
     <<153, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffdc:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffdc:21>>)
     <<154, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffd8:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffd8:22>>)
     <<155, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe5:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe5:23>>)
     <<156, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffd9:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffd9:22>>)
     <<157, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe6:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe6:23>>)
     <<158, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe7:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe7:23>>)
     <<159, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffef:24>>)
+      encode(remaining, <<accumulated:bits, 0xffffef:24>>)
     <<160, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffda:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffda:22>>)
     <<161, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffdd:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffdd:21>>)
     <<162, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffe9:20>>)
+      encode(remaining, <<accumulated:bits, 0xfffe9:20>>)
     <<163, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffdb:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffdb:22>>)
     <<164, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffdc:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffdc:22>>)
     <<165, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe8:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe8:23>>)
     <<166, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffe9:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffe9:23>>)
     <<167, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffde:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffde:21>>)
     <<168, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffea:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffea:23>>)
     <<169, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffdd:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffdd:22>>)
     <<170, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffde:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffde:22>>)
     <<171, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffff0:24>>)
+      encode(remaining, <<accumulated:bits, 0xfffff0:24>>)
     <<172, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffdf:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffdf:21>>)
     <<173, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffdf:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffdf:22>>)
     <<174, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffeb:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffeb:23>>)
     <<175, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffec:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffec:23>>)
     <<176, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffe0:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffe0:21>>)
     <<177, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffe1:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffe1:21>>)
     <<178, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe0:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe0:22>>)
     <<179, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffe2:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffe2:21>>)
     <<180, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffed:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffed:23>>)
     <<181, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe1:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe1:22>>)
     <<182, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffee:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffee:23>>)
     <<183, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffef:23>>)
+      encode(remaining, <<accumulated:bits, 0x7fffef:23>>)
     <<184, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffea:20>>)
+      encode(remaining, <<accumulated:bits, 0xfffea:20>>)
     <<185, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe2:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe2:22>>)
     <<186, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe3:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe3:22>>)
     <<187, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe4:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe4:22>>)
     <<188, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffff0:23>>)
+      encode(remaining, <<accumulated:bits, 0x7ffff0:23>>)
     <<189, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe5:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe5:22>>)
     <<190, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe6:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe6:22>>)
     <<191, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffff1:23>>)
+      encode(remaining, <<accumulated:bits, 0x7ffff1:23>>)
     <<192, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe0:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe0:26>>)
     <<193, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe1:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe1:26>>)
     <<194, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffeb:20>>)
+      encode(remaining, <<accumulated:bits, 0xfffeb:20>>)
     <<195, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fff1:19>>)
+      encode(remaining, <<accumulated:bits, 0x7fff1:19>>)
     <<196, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe7:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe7:22>>)
     <<197, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffff2:23>>)
+      encode(remaining, <<accumulated:bits, 0x7ffff2:23>>)
     <<198, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe8:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe8:22>>)
     <<199, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ffffec:25>>)
+      encode(remaining, <<accumulated:bits, 0x1ffffec:25>>)
     <<200, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe2:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe2:26>>)
     <<201, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe3:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe3:26>>)
     <<202, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe4:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe4:26>>)
     <<203, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffde:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffde:27>>)
     <<204, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffdf:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffdf:27>>)
     <<205, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe5:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe5:26>>)
     <<206, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffff1:24>>)
+      encode(remaining, <<accumulated:bits, 0xfffff1:24>>)
     <<207, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ffffed:25>>)
+      encode(remaining, <<accumulated:bits, 0x1ffffed:25>>)
     <<208, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fff2:19>>)
+      encode(remaining, <<accumulated:bits, 0x7fff2:19>>)
     <<209, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffe3:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffe3:21>>)
     <<210, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe6:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe6:26>>)
     <<211, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe0:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe0:27>>)
     <<212, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe1:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe1:27>>)
     <<213, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe7:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe7:26>>)
     <<214, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe2:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe2:27>>)
     <<215, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffff2:24>>)
+      encode(remaining, <<accumulated:bits, 0xfffff2:24>>)
     <<216, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffe4:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffe4:21>>)
     <<217, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffe5:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffe5:21>>)
     <<218, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe8:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe8:26>>)
     <<219, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffe9:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffe9:26>>)
     <<220, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffffd:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffffd:28>>)
     <<221, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe3:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe3:27>>)
     <<222, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe4:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe4:27>>)
     <<223, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe5:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe5:27>>)
     <<224, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffec:20>>)
+      encode(remaining, <<accumulated:bits, 0xfffec:20>>)
     <<225, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffff3:24>>)
+      encode(remaining, <<accumulated:bits, 0xfffff3:24>>)
     <<226, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffed:20>>)
+      encode(remaining, <<accumulated:bits, 0xfffed:20>>)
     <<227, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffe6:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffe6:21>>)
     <<228, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffe9:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffe9:22>>)
     <<229, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffe7:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffe7:21>>)
     <<230, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1fffe8:21>>)
+      encode(remaining, <<accumulated:bits, 0x1fffe8:21>>)
     <<231, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffff3:23>>)
+      encode(remaining, <<accumulated:bits, 0x7ffff3:23>>)
     <<232, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffea:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffea:22>>)
     <<233, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3fffeb:22>>)
+      encode(remaining, <<accumulated:bits, 0x3fffeb:22>>)
     <<234, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ffffee:25>>)
+      encode(remaining, <<accumulated:bits, 0x1ffffee:25>>)
     <<235, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x1ffffef:25>>)
+      encode(remaining, <<accumulated:bits, 0x1ffffef:25>>)
     <<236, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffff4:24>>)
+      encode(remaining, <<accumulated:bits, 0xfffff4:24>>)
     <<237, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xfffff5:24>>)
+      encode(remaining, <<accumulated:bits, 0xfffff5:24>>)
     <<238, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffea:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffea:26>>)
     <<239, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffff4:23>>)
+      encode(remaining, <<accumulated:bits, 0x7ffff4:23>>)
     <<240, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffeb:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffeb:26>>)
     <<241, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe6:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe6:27>>)
     <<242, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffec:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffec:26>>)
     <<243, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffed:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffed:26>>)
     <<244, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe7:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe7:27>>)
     <<245, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe8:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe8:27>>)
     <<246, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffe9:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffe9:27>>)
     <<247, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffea:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffea:27>>)
     <<248, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffeb:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffeb:27>>)
     <<249, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0xffffffe:28>>)
+      encode(remaining, <<accumulated:bits, 0xffffffe:28>>)
     <<250, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffec:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffec:27>>)
     <<251, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffed:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffed:27>>)
     <<252, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffee:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffee:27>>)
     <<253, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7ffffef:27>>)
+      encode(remaining, <<accumulated:bits, 0x7ffffef:27>>)
     <<254, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x7fffff0:27>>)
+      encode(remaining, <<accumulated:bits, 0x7fffff0:27>>)
     <<255, remaining:bytes>> ->
-      huffman_encode(remaining, <<accumulated:bits, 0x3ffffee:26>>)
+      encode(remaining, <<accumulated:bits, 0x3ffffee:26>>)
     <<>> -> add_eos_padding(accumulated)
     _ -> panic as "Invalid byte in Huffman encoding input"
   }

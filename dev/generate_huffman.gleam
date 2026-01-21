@@ -96,7 +96,7 @@ fn generate_encode_function(entries: List(HuffmanEntry)) -> String {
 
   let header =
     "/// Encodes data using Huffman encoding (RFC 7541 Appendix B)
-pub fn huffman_encode(data: BitArray, accumulated: BitArray) -> BitArray {
+pub fn encode(data: BitArray, accumulated: BitArray) -> BitArray {
   case data {
 "
 
@@ -106,7 +106,7 @@ pub fn huffman_encode(data: BitArray, accumulated: BitArray) -> BitArray {
       "    <<"
       <> int.to_string(entry.symbol)
       <> ", remaining:bytes>> ->\n"
-      <> "      huffman_encode(remaining, <<accumulated:bits, "
+      <> "      encode(remaining, <<accumulated:bits, "
       <> hex_value
       <> ":"
       <> int.to_string(entry.length)
@@ -167,7 +167,7 @@ fn generate_decode_function(entries: List(HuffmanEntry)) -> String {
 }
 
 /// Decodes Huffman-encoded data (RFC 7541 Appendix B)
-pub fn huffman_decode(
+pub fn decode(
   bits: BitArray,
   accumulated: BitArray,
 ) -> Result(BitArray, HuffmanError) {
@@ -192,7 +192,7 @@ pub fn huffman_decode(
           <> ":"
           <> len
           <> ", remaining:bits>> ->\n"
-          <> "      huffman_decode(remaining, <<accumulated:bits, "
+          <> "      decode(remaining, <<accumulated:bits, "
           <> int.to_string(symbol)
           <> ">>)"
       }
