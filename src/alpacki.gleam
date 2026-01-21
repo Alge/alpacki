@@ -1,3 +1,6 @@
+import alpacki/internal/huffman
+import gleam/result
+
 pub type DecodeError {
   Incomplete
   IntegerOverflow
@@ -190,4 +193,31 @@ fn maximum_value_for_bits(n: Int) -> Int {
     1 -> 1
     _ -> panic as "Invalid HPACK prefix size"
   }
+}
+
+// Huffman
+// -----------------------------------------------------------------------------
+
+/// Decodes Huffman-encoded data according to RFC 7541 Appendix B.
+///
+/// Accepts Huffman-encoded bits and returns the decoded byte sequence. The
+/// input must be properly padded to an octet boundary with valid EOS padding
+/// (1-7 bits of all 1s).
+///
+/// For more information, see Section 5.2:
+/// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
+pub fn huffman_decode(data: BitArray) -> Result(BitArray, Nil) {
+  huffman.huffman_decode(data, <<>>)
+  |> result.replace_error(Nil)
+}
+
+/// Encodes data using Huffman encoding according to RFC 7541 Appendix B.
+///
+/// Accepts raw bytes and returns Huffman-encoded bits with EOS padding to align
+/// to an octet boundary.
+///
+/// For more information, see Section 5.2:
+/// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
+pub fn huffman_encode(data: BitArray) {
+  huffman.huffman_encode(data, <<>>)
 }
