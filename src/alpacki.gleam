@@ -294,5 +294,5 @@ pub fn huffman_decode(data: BitArray) -> Result(BitArray, DecodeError) {
 /// For more information, see Section 5.2:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
 pub fn huffman_encode(data: BitArray) {
-  huffman.encode(data, <<>>)
+  huffman.encode(data, <<>>, 0)
 }

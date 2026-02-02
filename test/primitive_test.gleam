@@ -166,3 +166,39 @@ pub fn encode_integer_invalid_prefix_bits_test() {
   let assert Error(exception.Errored(_dynamic)) =
     exception.rescue(fn() { alpacki.encode_integer(22, prefix: -1) })
 }
+
+// String Literal Representation
+// -----------------------------------------------------------------------------
+
+// String `hello` encoded as plain text:
+//   0   1   2   3   4   5   6   7
+// +---+---+---+---+---+---+---+---+
+// | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 |  H=0, Length=5
+// +---+---------------------------+
+// |              `h`              |
+// +-------------------------------+
+//                ...
+// +-------------------------------+
+// |              `o`              |
+// +-------------------------------+
+pub fn decode_string_literal_plain_test() {
+  assert alpacki.decode_string_literal(<<0:1, 5:7, "hello":utf8>>)
+    == Ok(#(<<"hello":utf8>>, <<>>))
+}
+
+// String `wibble wobble` with 4 remaining bits.
+pub fn decode_string_literal_plain_with_remaining_test() {
+  assert alpacki.decode_string_literal(<<
+      0:1,
+      13:7,
+      "wibble wobble":utf8,
+      0b1010:4,
+    >>)
+    == Ok(#(<<"wibble wobble":utf8>>, <<0b1010:4>>))
+}
+
+// String `foo bar` to be encoded as plain string.
+pub fn encode_string_literal_plain_test() {
+  assert alpacki.encode_string_literal(<<"foo bar":utf8>>, huffman: False)
+    == <<0:1, 7:7, "foo bar":utf8>>
+}
