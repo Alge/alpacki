@@ -202,3 +202,17 @@ pub fn encode_string_literal_plain_test() {
   assert alpacki.encode_string_literal(<<"foo bar":utf8>>, huffman: False)
     == <<0:1, 7:7, "foo bar":utf8>>
 }
+
+// String `hi` Huffman-encoded:
+//   0   1   2   3   4   5   6   7
+// +---+---+---+---+---+---+---+---+
+// | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |  H=1, Length=2
+// +---+---------------------------+
+// |             0x9C              |
+// +-------------------------------+
+// |             0xDF              |
+// +-------------------------------+
+pub fn decode_string_literal_huffman_test() {
+  assert alpacki.decode_string_literal(<<0b10000010:8, 0x9C:8, 0xDF:8>>)
+  == Ok(#(<<"hi":utf8>>, <<>>))
+}
