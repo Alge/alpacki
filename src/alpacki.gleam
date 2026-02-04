@@ -1,6 +1,8 @@
 import alpacki/internal/huffman
 import gleam/bit_array
+import gleam/list
 import gleam/result
+import gleam/string
 
 pub type DecodeError {
   Incomplete
@@ -297,11 +299,310 @@ pub fn huffman_encode(data: BitArray) -> BitArray {
   huffman.encode(data, <<>>, 0)
 }
 
+// Header Field Representation
+// -----------------------------------------------------------------------------
+
+/// Represents the indexing strategy for a header field.
+pub type HeaderField {
+  /// Indexed representation - header fully represented by an index.
+  /// Section 6.1: 1xxxxxxx where x is the index (7-bit prefix).
+  Indexed(index: Int)
+  /// Literal with incremental indexing - adds to dynamic table.
+  /// Section 6.2.1: 01xxxxxx prefix.
+  LiteralIncremental(name: LiteralName, value: BitArray)
+  /// Literal without indexing - not added to dynamic table.
+  /// Section 6.2.2: 0000xxxx prefix.
+  LiteralWithoutIndexing(name: LiteralName, value: BitArray)
+  /// Literal never indexed - must not be added to dynamic table (sensitive).
+  /// Section 6.2.3: 0001xxxx prefix.
+  LiteralNeverIndexed(name: LiteralName, value: BitArray)
+}
+
+/// Name in a literal header field.
+pub type LiteralName {
+  /// Name represented by index into static or dynamic table.
+  IndexedName(index: Int)
+  /// Name as literal string.
+  LiteralNameValue(name: BitArray)
+}
+
+/// Decodes a header field representation from the bit stream. Returns the
+/// decoded name-value pair, updated dynamic table, and remaining bits. See
+/// RFC 7541 Section 6.
+pub fn decode_header(
+  data: BitArray,
+  table: DynamicTable,
+) -> Result(#(#(String, String), DynamicTable, BitArray), DecodeError) {
+  case data {
+    // Indexed Header Field: 1xxxxxxx (Section 6.1)
+    <<1:1, _:bits>> -> {
+      use #(index, remaining) <- result.try(decode_integer(data, 7))
+      use header <- result.try(
+        lookup(index, table) |> result.replace_error(InvalidEncoding),
+      )
+      Ok(#(header, table, remaining))
+    }
+
+    // Literal Header Field with Incremental Indexing: 01xxxxxx (Section 6.2.1)
+    <<0:1, 1:1, _:bits>> -> {
+      use #(name, value, remaining) <- result.try(decode_literal_header(
+        data,
+        table,
+        6,
+      ))
+      let table = append_dynamic(table, name, value)
+      Ok(#(#(name, value), table, remaining))
+    }
+
+    // Dynamic Table Size Update: 001xxxxx (Section 6.3)
+    <<0:1, 0:1, 1:1, _:bits>> -> {
+      use #(new_size, remaining) <- result.try(decode_integer(data, 5))
+      let table = resize_dynamic(table, new_size)
+      // Size update doesn't produce a header, decode next field
+      decode_header(remaining, table)
+    }
+
+    // Literal Header Field Never Indexed: 0001xxxx (Section 6.2.3)
+    <<0:1, 0:1, 0:1, 1:1, _:bits>> -> {
+      use #(name, value, remaining) <- result.try(decode_literal_header(
+        data,
+        table,
+        4,
+      ))
+      Ok(#(#(name, value), table, remaining))
+    }
+
+    // Literal Header Field without Indexing: 0000xxxx (Section 6.2.2)
+    <<0:1, 0:1, 0:1, 0:1, _:bits>> -> {
+      use #(name, value, remaining) <- result.try(decode_literal_header(
+        data,
+        table,
+        4,
+      ))
+      Ok(#(#(name, value), table, remaining))
+    }
+
+    _ -> Error(Incomplete)
+  }
+}
+
+// Helper: decodes literal header (name index or literal + value literal)
+fn decode_literal_header(
+  data: BitArray,
+  table: DynamicTable,
+  prefix: Int,
+) -> Result(#(String, String, BitArray), DecodeError) {
+  use #(name_index, remaining) <- result.try(decode_integer(data, prefix))
+
+  case name_index {
+    // Name is a literal (index = 0)
+    0 -> {
+      use #(name_bits, remaining) <- result.try(decode_string_literal(remaining))
+      use #(value_bits, remaining) <- result.try(decode_string_literal(
+        remaining,
+      ))
+      use name <- result.try(
+        bit_array.to_string(name_bits) |> result.replace_error(InvalidEncoding),
+      )
+      use value <- result.try(
+        bit_array.to_string(value_bits)
+        |> result.replace_error(InvalidEncoding),
+      )
+      Ok(#(name, value, remaining))
+    }
+    // Name is indexed
+    index -> {
+      use #(name, _) <- result.try(
+        lookup(index, table) |> result.replace_error(InvalidEncoding),
+      )
+      use #(value_bits, remaining) <- result.try(decode_string_literal(
+        remaining,
+      ))
+      use value <- result.try(
+        bit_array.to_string(value_bits)
+        |> result.replace_error(InvalidEncoding),
+      )
+      Ok(#(name, value, remaining))
+    }
+  }
+}
+
+/// Encodes a header field using the specified indexing strategy. Searches both
+/// tables and selects the optimal representation. Returns encoded bits and
+/// updated dynamic table. See RFC 7541 Section 6.
+pub fn encode_header(
+  name: String,
+  value: String,
+  table: DynamicTable,
+  indexing: HeaderIndexing,
+  huffman: Bool,
+) -> #(BitArray, DynamicTable) {
+  let name_bits = bit_array.from_string(name)
+  let value_bits = bit_array.from_string(value)
+
+  // Try to find existing entry
+  case match(name, value, table) {
+    // Full match in table - use indexed representation
+    FullMatch(index) -> #(encode_indexed(index), table)
+
+    // Name match - use literal with indexed name
+    NameMatch(index) ->
+      case indexing {
+        Incremental -> {
+          let encoded =
+            encode_literal_incremental_indexed_name(index, value_bits, huffman)
+          let table = append_dynamic(table, name, value)
+          #(encoded, table)
+        }
+        WithoutIndexing -> {
+          let encoded =
+            encode_literal_without_indexing_indexed_name(
+              index,
+              value_bits,
+              huffman,
+            )
+          #(encoded, table)
+        }
+        NeverIndexed -> {
+          let encoded =
+            encode_literal_never_indexed_indexed_name(
+              index,
+              value_bits,
+              huffman,
+            )
+          #(encoded, table)
+        }
+      }
+
+    // No match - use literal with literal name
+    NoMatch ->
+      case indexing {
+        Incremental -> {
+          let encoded =
+            encode_literal_incremental_new_name(name_bits, value_bits, huffman)
+          let table = append_dynamic(table, name, value)
+          #(encoded, table)
+        }
+        WithoutIndexing -> {
+          let encoded =
+            encode_literal_without_indexing_new_name(
+              name_bits,
+              value_bits,
+              huffman,
+            )
+          #(encoded, table)
+        }
+        NeverIndexed -> {
+          let encoded =
+            encode_literal_never_indexed_new_name(
+              name_bits,
+              value_bits,
+              huffman,
+            )
+          #(encoded, table)
+        }
+      }
+  }
+}
+
+/// Indexing strategy for encoding headers.
+pub type HeaderIndexing {
+  /// Add to dynamic table (Section 6.2.1).
+  Incremental
+  /// Don't add to dynamic table (Section 6.2.2).
+  WithoutIndexing
+  /// Never index - for sensitive data (Section 6.2.3).
+  NeverIndexed
+}
+
+// Encoding helpers
+// -----------------------------------------------------------------------------
+
+// Indexed Header Field: 1xxxxxxx
+fn encode_indexed(index: Int) -> BitArray {
+  case encode_integer(index, prefix: 7) {
+    <<byte:8, remaining:bits>> -> <<{ byte + 0b10000000 }:8, remaining:bits>>
+    _ -> panic as "Unreachable: encode_integer always returns >= 1 byte"
+  }
+}
+
+// Literal Incremental with Indexed Name: 01xxxxxx
+fn encode_literal_incremental_indexed_name(
+  index: Int,
+  value: BitArray,
+  huffman: Bool,
+) -> BitArray {
+  let index_bits = case encode_integer(index, prefix: 6) {
+    <<byte:8, remaining:bits>> -> <<{ byte + 0b01000000 }:8, remaining:bits>>
+    _ -> panic as "Unreachable: encode_integer always returns >= 1 byte"
+  }
+  let value_bits = encode_string_literal(value, huffman)
+  <<index_bits:bits, value_bits:bits>>
+}
+
+// Literal Incremental with New Name: 01000000
+fn encode_literal_incremental_new_name(
+  name: BitArray,
+  value: BitArray,
+  huffman: Bool,
+) -> BitArray {
+  let name_bits = encode_string_literal(name, huffman)
+  let value_bits = encode_string_literal(value, huffman)
+  <<0b01000000:8, name_bits:bits, value_bits:bits>>
+}
+
+// Literal Without Indexing with Indexed Name: 0000xxxx
+fn encode_literal_without_indexing_indexed_name(
+  index: Int,
+  value: BitArray,
+  huffman: Bool,
+) -> BitArray {
+  let index_bits = encode_integer(index, prefix: 4)
+  let value_bits = encode_string_literal(value, huffman)
+  <<index_bits:bits, value_bits:bits>>
+}
+
+// Literal Without Indexing with New Name: 00000000
+fn encode_literal_without_indexing_new_name(
+  name: BitArray,
+  value: BitArray,
+  huffman: Bool,
+) -> BitArray {
+  let name_bits = encode_string_literal(name, huffman)
+  let value_bits = encode_string_literal(value, huffman)
+  <<0b00000000:8, name_bits:bits, value_bits:bits>>
+}
+
+// Literal Never Indexed with Indexed Name: 0001xxxx
+fn encode_literal_never_indexed_indexed_name(
+  index: Int,
+  value: BitArray,
+  huffman: Bool,
+) -> BitArray {
+  let index_bits = case encode_integer(index, prefix: 4) {
+    <<byte:8, remaining:bits>> -> <<{ byte + 0b00010000 }:8, remaining:bits>>
+    _ -> panic as "Unreachable: encode_integer always returns >= 1 byte"
+  }
+  let value_bits = encode_string_literal(value, huffman)
+  <<index_bits:bits, value_bits:bits>>
+}
+
+// Literal Never Indexed with New Name: 00010000
+fn encode_literal_never_indexed_new_name(
+  name: BitArray,
+  value: BitArray,
+  huffman: Bool,
+) -> BitArray {
+  let name_bits = encode_string_literal(name, huffman)
+  let value_bits = encode_string_literal(value, huffman)
+  <<0b00010000:8, name_bits:bits, value_bits:bits>>
+}
+
 // Static Table
 // -----------------------------------------------------------------------------
 
 /// Looks up a header by its index (1-61) in the static table.
-pub fn static_table_lookup(index: Int) -> Result(#(String, String), Nil) {
+pub fn lookup_static(index: Int) -> Result(#(String, String), Nil) {
   case index {
     1 -> Ok(#(":authority", ""))
     2 -> Ok(#(":method", "GET"))
@@ -368,23 +669,10 @@ pub fn static_table_lookup(index: Int) -> Result(#(String, String), Nil) {
   }
 }
 
-/// Result of matching a header against the static table
-pub type StaticTableMatch {
-  /// Both name and value match exactly
-  FullMatch(index: Int)
-  /// Only the name matches, with index of first occurrence
-  NameMatch(index: Int)
-  /// Name not in static table
-  NoMatch
-}
-
-/// Matches a header against the static table.
-///
-/// Returns:
-/// - `FullMatch(index)` if both name and value match exactly
-/// - `NameMatch(index)` if only the name matches
-/// - `NoMatch` if the name is not in the static table
-pub fn static_table_match(name: String, value: String) -> StaticTableMatch {
+/// Searches the static table for an entry matching the name and value. Returns
+/// FullMatch with index if both match, NameMatch with index if only name matches,
+/// or NoMatch.
+pub fn match_static(name: String, value: String) -> TableMatch {
   case name, value {
     ":authority", "" -> FullMatch(1)
     ":method", "GET" -> FullMatch(2)
@@ -500,5 +788,274 @@ pub fn static_table_match(name: String, value: String) -> StaticTableMatch {
     "via", _ -> NameMatch(60)
     "www-authenticate", _ -> NameMatch(61)
     _, _ -> NoMatch
+  }
+}
+
+// Dynamic Table
+// -----------------------------------------------------------------------------
+
+/// Dynamic table for HPACK compression. Stores recently used headers with
+/// indices starting at 62. The encoder and decoder each maintain their own
+/// table.
+///
+/// See RFC 7541 Section 2.3:
+/// - https://datatracker.ietf.org/doc/html/rfc7541#section-2.3
+pub type DynamicTable {
+  DynamicTable(
+    entries: List(#(String, String)),
+    size: Int,
+    max_size: Int,
+    length: Int,
+  )
+}
+
+// Dynamic table starts at index 62.
+const dynamic_table_start = 62
+
+// Entry overhead as defined in RFC 7541 Section 4.1.
+const entry_overhead = 32
+
+/// Creates an empty dynamic table with the specified maximum size in bytes.
+/// Default maximum size per RFC 7541 is 4096 bytes.
+pub fn new_dynamic(max_size: Int) -> DynamicTable {
+  DynamicTable(entries: [], size: 0, max_size: max_size, length: 0)
+}
+
+/// Adds an entry to the dynamic table at index 62. Evicts oldest entries if
+/// the new entry would exceed maximum size. Clears the table without adding if
+/// the entry alone exceeds maximum size. See RFC 7541 Section 4.4.
+pub fn add_dynamic(
+  table: DynamicTable,
+  name: String,
+  value: String,
+) -> DynamicTable {
+  let entry_size = calculate_entry_size(name, value)
+
+  // if entry is larger than max_size, clear table and don't add
+  case entry_size > table.max_size {
+    True -> DynamicTable(..table, entries: [], size: 0, length: 0)
+    False -> {
+      let table = evict_until_fits(table, entry_size)
+      DynamicTable(
+        entries: [#(name, value), ..table.entries],
+        size: table.size + entry_size,
+        max_size: table.max_size,
+        length: table.length + 1,
+      )
+    }
+  }
+}
+
+/// Looks up an entry by index in the dynamic table (indices 62+). Returns the
+/// name-value pair or an error if the index is invalid.
+pub fn lookup_dynamic(
+  table: DynamicTable,
+  index: Int,
+) -> Result(#(String, String), Nil) {
+  case index < dynamic_table_start {
+    True -> Error(Nil)
+    False -> {
+      let position = index - dynamic_table_start
+      case position < table.length {
+        True -> list.drop(table.entries, position) |> list.first
+        False -> Error(Nil)
+      }
+    }
+  }
+}
+
+/// Searches the dynamic table for an entry matching the name and value. Returns
+/// FullMatch with index if both match, NameMatch with index if only name
+/// matches, or NoMatch.
+pub fn match_dynamic(
+  table: DynamicTable,
+  name: String,
+  value: String,
+) -> TableMatch {
+  case table.length {
+    0 -> NoMatch
+    _ -> do_match_dynamic(table.entries, name, value, 0, NoMatch)
+  }
+}
+
+fn do_match_dynamic(
+  entries: List(#(String, String)),
+  name: String,
+  value: String,
+  position: Int,
+  match_accumulator: TableMatch,
+) -> TableMatch {
+  case entries {
+    // Found exact match
+    [#(n, v), ..] if n == name && v == value ->
+      FullMatch(dynamic_table_start + position)
+
+    // Name matches but value doesn't
+    [#(n, _), ..remaining] if n == name -> {
+      let match_accumulator = case match_accumulator {
+        NoMatch -> NameMatch(dynamic_table_start + position)
+        match_accumulator -> match_accumulator
+      }
+      do_match_dynamic(remaining, name, value, position + 1, match_accumulator)
+    }
+
+    // No match
+    [_, ..remaining] ->
+      do_match_dynamic(remaining, name, value, position + 1, match_accumulator)
+
+    // Return what we found
+    [] -> match_accumulator
+  }
+}
+
+/// Updates the dynamic table maximum size. Evicts oldest entries if current
+/// size exceeds the new maximum.
+pub fn resize_dynamic(table: DynamicTable, new_max_size: Int) -> DynamicTable {
+  DynamicTable(..evict_to_size(table, new_max_size), max_size: new_max_size)
+}
+
+/// Removes all entries from the dynamic table while preserving maximum size.
+pub fn clear_dynamic(table: DynamicTable) -> DynamicTable {
+  DynamicTable(..table, entries: [], size: 0, length: 0)
+}
+
+// Evicts oldest entries until there is space for the new entry.
+fn evict_until_fits(table: DynamicTable, needed_space: Int) -> DynamicTable {
+  case table.size + needed_space <= table.max_size {
+    True -> table
+    False -> {
+      let #(reversed_entries, new_size, new_length) =
+        do_evict_until_fits(
+          list.reverse(table.entries),
+          table.size,
+          table.length,
+          needed_space,
+          table.max_size,
+        )
+
+      DynamicTable(
+        entries: list.reverse(reversed_entries),
+        size: new_size,
+        max_size: table.max_size,
+        length: new_length,
+      )
+    }
+  }
+}
+
+fn do_evict_until_fits(
+  reversed_entries: List(#(String, String)),
+  size: Int,
+  length: Int,
+  needed_space: Int,
+  max_size: Int,
+) -> #(List(#(String, String)), Int, Int) {
+  case size + needed_space <= max_size {
+    True -> #(reversed_entries, size, length)
+    False ->
+      case reversed_entries {
+        [] -> #([], size, length)
+        [#(name, value), ..rest] -> {
+          let freed_size = calculate_entry_size(name, value)
+
+          do_evict_until_fits(
+            rest,
+            size - freed_size,
+            length - 1,
+            needed_space,
+            max_size,
+          )
+        }
+      }
+  }
+}
+
+// Evicts oldest entries until table size is within the target size.
+fn evict_to_size(table: DynamicTable, target_size: Int) -> DynamicTable {
+  case table.size <= target_size {
+    True -> table
+    False -> {
+      let #(reversed_entries, new_size, new_length) =
+        do_evict_to_size(
+          list.reverse(table.entries),
+          table.size,
+          table.length,
+          target_size,
+        )
+
+      DynamicTable(
+        entries: list.reverse(reversed_entries),
+        size: new_size,
+        max_size: table.max_size,
+        length: new_length,
+      )
+    }
+  }
+}
+
+fn do_evict_to_size(
+  reversed_entries: List(#(String, String)),
+  size: Int,
+  length: Int,
+  target_size: Int,
+) -> #(List(#(String, String)), Int, Int) {
+  case size <= target_size {
+    True -> #(reversed_entries, size, length)
+    False ->
+      case reversed_entries {
+        [] -> #([], size, length)
+        [#(name, value), ..rest] -> {
+          let freed_size = calculate_entry_size(name, value)
+          do_evict_to_size(rest, size - freed_size, length - 1, target_size)
+        }
+      }
+  }
+}
+
+// Calculates entry size per RFC 7541 Section 4.1: name + value + 32 bytes.
+fn calculate_entry_size(name: String, value: String) -> Int {
+  string.byte_size(name) + string.byte_size(value) + entry_overhead
+}
+
+// Tables
+// -----------------------------------------------------------------------------
+
+/// Result of matching a header against a table.
+pub type TableMatch {
+  FullMatch(index: Int)
+  NameMatch(index: Int)
+  NoMatch
+}
+
+/// Searches static and dynamic tables for an entry matching the name and value.
+/// Returns FullMatch with index if both match, NameMatch with index if only 
+/// name matches, or NoMatch.
+pub fn match(
+  name: String,
+  value: String,
+  dynamic_table: DynamicTable,
+) -> TableMatch {
+  // Check static table first 
+  case match_static(name, value) {
+    NameMatch(static_index) -> {
+      case match_dynamic(dynamic_table, name, value) {
+        NoMatch | NameMatch(_) -> NameMatch(static_index)
+        matched -> matched
+      }
+    }
+    NoMatch -> match_dynamic(dynamic_table, name, value)
+    full_match -> full_match
+  }
+}
+
+/// Looks up an entry by index in the static table (1-61) or dynamic table 
+/// (62+). Returns the name-value pair or an error if the index is invalid.
+pub fn lookup(
+  index: Int,
+  dynamic_table: DynamicTable,
+) -> Result(#(String, String), Nil) {
+  case index < dynamic_table_start {
+    True -> lookup_static(index)
+    False -> lookup_dynamic(dynamic_table, index)
   }
 }
