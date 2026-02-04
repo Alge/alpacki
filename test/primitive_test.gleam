@@ -214,5 +214,5 @@ pub fn encode_string_literal_plain_test() {
 // +-------------------------------+
 pub fn decode_string_literal_huffman_test() {
   assert alpacki.decode_string_literal(<<0b10000010:8, 0x9C:8, 0xDF:8>>)
-  == Ok(#(<<"hi":utf8>>, <<>>))
+    == Ok(#(<<"hi":utf8>>, <<>>))
 }
