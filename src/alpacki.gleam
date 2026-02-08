@@ -296,13 +296,13 @@ pub fn huffman_decode(data: BitArray) -> Result(BitArray, DecodeError) {
 /// For more information, see Section 5.2:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
 pub fn huffman_encode(data: BitArray) -> BitArray {
-  huffman.encode(data, <<>>, 0)
+  huffman.encode(data, <<>>)
 }
 
 // Static Table
 // -----------------------------------------------------------------------------
 
-/// Looks up a header by its index (1-61) in the static table.
+/// Looks up a header by index from 1 to 61 in the static table.
 pub fn lookup_static(index: Int) -> Result(#(String, String), Nil) {
   case index {
     1 -> Ok(#(":authority", ""))
@@ -371,8 +371,8 @@ pub fn lookup_static(index: Int) -> Result(#(String, String), Nil) {
 }
 
 /// Searches the static table for an entry matching the name and value. Returns
-/// FullMatch with index if both match, NameMatch with index if only name matches,
-/// or NoMatch.
+/// FullMatch with index if both match, NameMatch with index if only name
+/// matches, or NoMatch.
 pub fn match_static(name: String, value: String) -> TableMatch {
   case name, value {
     ":authority", "" -> FullMatch(1)
@@ -501,7 +501,7 @@ pub fn match_static(name: String, value: String) -> TableMatch {
 ///
 /// See RFC 7541 Section 2.3:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-2.3
-pub type DynamicTable {
+pub opaque type DynamicTable {
   DynamicTable(
     entries: List(#(String, String)),
     size: Int,
@@ -532,7 +532,6 @@ pub fn add_dynamic(
 ) -> DynamicTable {
   let entry_size = calculate_entry_size(name, value)
 
-  // if entry is larger than max_size, clear table and don't add
   case entry_size > table.max_size {
     True -> DynamicTable(..table, entries: [], size: 0, length: 0)
     False -> {
@@ -547,8 +546,8 @@ pub fn add_dynamic(
   }
 }
 
-/// Looks up an entry by index in the dynamic table (indices 62+). Returns the
-/// name-value pair or an error if the index is invalid.
+/// Looks up an entry by index in the dynamic table. Returns the name-value
+/// pair or an error if the index is invalid.
 pub fn lookup_dynamic(
   table: DynamicTable,
   index: Int,
@@ -749,8 +748,8 @@ pub fn match(
   }
 }
 
-/// Looks up an entry by index in the static table (1-61) or dynamic table
-/// (62+). Returns the name-value pair or an error if the index is invalid.
+/// Looks up an entry by index in the static table or dynamic table. Returns
+/// the name-value pair or an error if the index is invalid.
 pub fn lookup(
   index: Int,
   dynamic_table: DynamicTable,

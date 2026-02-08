@@ -1,7 +1,7 @@
 name = "alpacki"
 version = "1.0.0"
 
-describtion = "🦙 HPACK protocol (RFC 7541) for Gleam"
+description = "🦙 HPACK protocol (RFC 7541) for Gleam"
 target = "erlang"
 licenses = ["Apache-2.0"]
 repository = { type = "github", user = "vshakitskiy", repo = "alpacki" }

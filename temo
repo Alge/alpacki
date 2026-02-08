@@ -1,0 +1,6 @@
+7. Add encode_dynamic_table_size_update
+Your library can decode size updates (Section 6.3) but cannot encode them. hpax handles this elegantly with a "pending resize" queue — when resize is called, it queues the size update signal which is automatically prepended to the next encoded block. This is essential for a complete HTTP/2 implementation.
+8. Per-Header Sensitive Flag (hpax's Action Model)
+hpax lets callers specify the indexing action per-header as part of the input: {:store | :no_store | :never_store, name, value}. Your API takes the indexing strategy as a separate parameter to encode_header, which works for single-header encoding but becomes awkward for batch encoding where different headers need different strategies.
+9. Track protocol_max_table_size Separately
+hpax distinguishes between protocol_max_table_size (negotiated by HTTP/2 SETTINGS) and max_table_size (current effective max, which can be lower). Your DynamicTable only has max_size. This matters because RFC 7541 §4.2 requires that a dynamic table size update MUST NOT exceed the protocol-level limit. Without tracking both, you can't validate this constraint during decoding.

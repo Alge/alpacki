@@ -13,8 +13,7 @@ pub fn main() {
   let entries = parse_static_table(content)
   let generated_code = generate_static_table_code(entries)
 
-  let assert Ok(_) =
-    simplifile.write("src/alpacki/internal/static_table.gleam", generated_code)
+  let assert Ok(_) = simplifile.write("priv/static_table.gleam", generated_code)
     as "✗ Failed to write generated file"
 
   io.println("✓ Generated src/alpacki/internal/static_table.gleam")
