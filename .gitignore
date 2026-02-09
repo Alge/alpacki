@@ -2,5 +2,6 @@
 *.ez
 /build
 erl_crash.dump
-GUIDE.md
 /priv/static_table.gleam
+serve.ts
+.claude

@@ -1,3 +1,99 @@
+//// <script>
+//// const docs = [
+////   {
+////     header: "Tables",
+////     functions: [
+////       "match",
+////       "lookup"
+////     ]
+////   },
+////   {
+////     header: "Dynamic Table",
+////     functions: [
+////       "new_dynamic",
+////       "add_dynamic",
+////       "lookup_dynamic",
+////       "match_dynamic",
+////       "resize_dynamic",
+////       "clear_dynamic"
+////     ]
+////   },
+////   {
+////     header: "Static Table",
+////     functions: [
+////       "lookup_static",
+////       "match_static"
+////     ]
+////   },
+////   {
+////     header: "Primitives",
+////     functions: [
+////      "decode_integer",
+////      "encode_integer",
+////      "decode_string_literal",
+////      "encode_string_literal"
+////     ]
+////   },
+////   {
+////     header: "Huffman",
+////     functions: [
+////       "decode_huffman",
+////       "encode_huffman"
+////     ]
+////   },
+//// ]
+////
+//// const callback = () => {
+////   const list = document.querySelector(".sidebar > ul:last-of-type")
+////   const sortedLists = document.createDocumentFragment()
+////   const sortedMembers = document.createDocumentFragment()
+////
+////   for (const section of docs) {
+////     sortedLists.append((() => {
+////       const node = document.createElement("h3")
+////       node.append(section.header)
+////       return node
+////     })())
+////     sortedMembers.append((() => {
+////       const node = document.createElement("h2")
+////       node.append(section.header)
+////       return node
+////     })())
+////
+////     const sortedList = document.createElement("ul")
+////     sortedLists.append(sortedList)
+////
+////     const sortedFunctions = [...section.functions].sort()
+////
+////     for (const funcName of sortedFunctions) {
+////       const href = `#${funcName}`
+////       const member = document.querySelector(
+////         `.member:has(h2 > a[href="${href}"])`
+////       )
+////       const sidebar = list.querySelector(`li:has(a[href="${href}"])`)
+////       sortedList.append(sidebar)
+////       sortedMembers.append(member)
+////     }
+////   }
+////
+////   document.querySelector(".sidebar").insertBefore(sortedLists, list)
+////   document
+////     .querySelector(".module-members:has(#module-values)")
+////     .insertBefore(
+////       sortedMembers,
+////       document.querySelector("#module-values").nextSibling
+////     )
+//// }
+////
+//// document.readyState !== "loading"
+////   ? callback()
+////   : document.addEventListener(
+////     "DOMContentLoaded",
+////     callback,
+////     { once: true }
+////   )
+//// </script>
+
 import alpacki/internal/huffman
 import gleam/bit_array
 import gleam/list
@@ -226,7 +322,7 @@ pub fn decode_string_literal(
 
   case remaining, data {
     <<encoded:bytes-size(length), remaining:bits>>, <<1:1, _remaining:bits>> -> {
-      use string_literal <- result.try(huffman_decode(encoded))
+      use string_literal <- result.try(decode_huffman(encoded))
       Ok(#(string_literal, remaining))
     }
     <<string_literal:bytes-size(length), remaining:bits>>,
@@ -262,7 +358,7 @@ pub fn decode_string_literal(
 /// ```
 pub fn encode_string_literal(data: BitArray, huffman huffman: Bool) -> BitArray {
   let #(data, h) = case huffman {
-    True -> #(huffman_encode(data), 0b10000000)
+    True -> #(encode_huffman(data), 0b10000000)
     False -> #(data, 0b00000000)
   }
 
@@ -283,7 +379,7 @@ pub fn encode_string_literal(data: BitArray, huffman huffman: Bool) -> BitArray 
 ///
 /// For more information, see Section 5.2:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
-pub fn huffman_decode(data: BitArray) -> Result(BitArray, DecodeError) {
+pub fn decode_huffman(data: BitArray) -> Result(BitArray, DecodeError) {
   huffman.decode(data, <<>>)
   |> result.replace_error(InvalidEncoding)
 }
@@ -295,7 +391,7 @@ pub fn huffman_decode(data: BitArray) -> Result(BitArray, DecodeError) {
 ///
 /// For more information, see Section 5.2:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
-pub fn huffman_encode(data: BitArray) -> BitArray {
+pub fn encode_huffman(data: BitArray) -> BitArray {
   huffman.encode(data, <<>>)
 }
 
@@ -519,7 +615,7 @@ const entry_overhead = 32
 /// Creates an empty dynamic table with the specified maximum size in bytes.
 /// Default maximum size per RFC 7541 is 4096 bytes.
 pub fn new_dynamic(max_size: Int) -> DynamicTable {
-  DynamicTable(entries: [], size: 0, max_size: max_size, length: 0)
+  DynamicTable(entries: [], size: 0, max_size:, length: 0)
 }
 
 /// Adds an entry to the dynamic table at index 62. Evicts oldest entries if
@@ -735,7 +831,6 @@ pub fn match(
   value: String,
   dynamic_table: DynamicTable,
 ) -> TableMatch {
-  // Check static table first
   case match_static(name, value) {
     NameMatch(static_index) -> {
       case match_dynamic(dynamic_table, name, value) {
@@ -759,3 +854,132 @@ pub fn lookup(
     False -> lookup_dynamic(dynamic_table, index)
   }
 }
+
+// Headers
+// -----------------------------------------------------------------------------
+
+pub type HeaderField {
+  HeaderField(name: String, value: String, sensitive: Bool)
+}
+
+/// Decodes a complete header block fragment into a list of header fields,
+/// updating the dynamic table as specified by the encoded instructions.
+///
+/// For more information, see Section 6:
+/// - https://datatracker.ietf.org/doc/html/rfc7541#section-6
+pub fn decode_header_block(
+  data: BitArray,
+  dynamic_table: DynamicTable,
+) -> Result(#(List(HeaderField), DynamicTable), DecodeError) {
+  decode_header_fields(data, dynamic_table, [])
+}
+
+fn decode_header_fields(
+  data: BitArray,
+  table: DynamicTable,
+  acc: List(HeaderField),
+) -> Result(#(List(HeaderField), DynamicTable), DecodeError) {
+  case data {
+    <<>> -> Ok(#(list.reverse(acc), table))
+
+    // 6.1 Indexed Header Field Representation
+    //   0   1   2   3   4   5   6   7
+    // +---+---+---+---+---+---+---+---+
+    // | 1 |        Index (7+)         |
+    // +---+---------------------------+
+    <<1:1, _:7, _:bits>> -> {
+      use #(index, remaining) <- result.try(decode_integer(data, 7))
+      use #(name, value) <- result.try(
+        lookup(index, table) |> result.replace_error(InvalidEncoding),
+      )
+      let header = HeaderField(name:, value:, sensitive: False)
+      decode_header_fields(remaining, table, [header, ..acc])
+    }
+
+    // 6.2.1 Literal Header Field with Incremental Indexing
+    //   0   1   2   3   4   5   6   7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 1 |      Index (6+)       |
+    // +---+---+-----------------------+
+    <<0:1, 1:1, _:6, _:bits>> -> {
+      use #(name, value, remaining) <- result.try(decode_literal(data, table, 6))
+      let table = add_dynamic(table, name, value)
+      let header = HeaderField(name:, value:, sensitive: False)
+      decode_header_fields(remaining, table, [header, ..acc])
+    }
+
+    // 6.3 Dynamic Table Size Update
+    //   0   1   2   3   4   5   6   7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 0 | 1 |   Max size (5+)   |
+    // +---+---+---+-------------------+
+    <<0:2, 1:1, _:5, _:bits>> -> {
+      use #(new_size, remaining) <- result.try(decode_integer(data, 5))
+      let table = resize_dynamic(table, new_size)
+      decode_header_fields(remaining, table, acc)
+    }
+
+    // 6.2.3 Literal Header Field Never Indexed
+    //   0   1   2   3   4   5   6   7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 0 | 0 | 1 |  Index (4+)   |
+    // +---+---+---+---+---------------+
+    <<0:3, 1:1, _:4, _:bits>> -> {
+      use #(name, value, remaining) <- result.try(decode_literal(data, table, 4))
+      let header = HeaderField(name:, value:, sensitive: True)
+      decode_header_fields(remaining, table, [header, ..acc])
+    }
+
+    // 6.2.2 Literal Header Field without Indexing
+    //   0   1   2   3   4   5   6   7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 0 | 0 | 0 |  Index (4+)   |
+    // +---+---+---+---+---------------+
+    <<0:4, _:4, _:bits>> -> {
+      use #(name, value, remaining) <- result.try(decode_literal(data, table, 4))
+      let header = HeaderField(name:, value:, sensitive: False)
+      decode_header_fields(remaining, table, [header, ..acc])
+    }
+
+    _ -> Error(InvalidEncoding)
+  }
+}
+
+fn decode_literal(
+  data: BitArray,
+  table: DynamicTable,
+  prefix: Int,
+) -> Result(#(String, String, BitArray), DecodeError) {
+  use #(index, remaining) <- result.try(decode_integer(data, prefix))
+
+  use #(name, remaining) <- result.try(case index {
+    // That is a new string literal.
+    0 -> {
+      use #(name, remaining) <- result.try(decode_string_literal(remaining))
+      use name <- result.try(
+        validate_header_name(name)
+        |> result.replace_error(InvalidEncoding),
+      )
+
+      Ok(#(name, remaining))
+    }
+    // That is a name from the table.
+    _ -> {
+      use #(name, _value) <- result.try(
+        lookup(index, table) |> result.replace_error(InvalidEncoding),
+      )
+      Ok(#(name, remaining))
+    }
+  })
+
+  // Value is always a string literal.
+  use #(value_bits, rest) <- result.try(decode_string_literal(remaining))
+  use value <- result.try(
+    bit_array.to_string(value_bits) |> result.replace_error(InvalidEncoding),
+  )
+
+  Ok(#(name, value, rest))
+}
+
+@external(erlang, "alpacki_ffi", "validate_header_name")
+fn validate_header_name(data: BitArray) -> Result(String, Nil)
