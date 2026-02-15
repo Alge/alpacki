@@ -18,6 +18,9 @@
 ////     header: "Dynamic Table",
 ////     functions: [
 ////       "new_dynamic",
+////       "dynamic_size",
+////       "dynamic_max_size",
+////       "dynamic_length",
 ////       "add_dynamic",
 ////       "lookup_dynamic",
 ////       "match_dynamic",
@@ -104,6 +107,7 @@
 
 import alpacki/internal/huffman
 import gleam/bit_array
+import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -189,7 +193,7 @@ const max_continuation_multiplier = 268_435_456
 // Decodes an integer encoded after the prefix.
 fn decode_integer_after_prefix(
   data: BitArray,
-  accumulated: Int,
+  acc: Int,
   multiplier: Int,
   // ^^^^^^^
   // Represents the place value weight of the current continuation byte in
@@ -202,12 +206,12 @@ fn decode_integer_after_prefix(
 
     // If MSB is set to 0, this is the last byte.
     False, <<0:1, value:7, remaining:bits>> ->
-      Ok(#(accumulated + value * multiplier, remaining))
+      Ok(#(acc + value * multiplier, remaining))
     // If MSB is set to 1, the value continues.
     False, <<1:1, value:7, remaining:bits>> ->
       decode_integer_after_prefix(
         remaining,
-        accumulated + value * multiplier,
+        acc + value * multiplier,
         multiplier * 128,
       )
 
@@ -273,13 +277,13 @@ pub fn encode_integer(integer: Int, prefix prefix: Int) -> BitArray {
 // Encodes continuation bytes using base-128 variable-length encoding.
 fn encode_integer_after_prefix(
   remaining: Int,
-  accumulated: BitArray,
+  acc: BitArray,
 ) -> BitArray {
   case remaining < 128 {
-    True -> <<accumulated:bits, 0:1, remaining:7>>
+    True -> <<acc:bits, 0:1, remaining:7>>
     False ->
       encode_integer_after_prefix(remaining / 128, <<
-        accumulated:bits,
+        acc:bits,
         1:1,
         { remaining % 128 }:7,
       >>)
@@ -623,6 +627,21 @@ const dynamic_table_start = 62
 // Entry overhead as defined in RFC 7541 Section 4.1.
 const entry_overhead = 32
 
+/// Returns the current size of the dynamic table in bytes.
+pub fn dynamic_size(table: DynamicTable) -> Int {
+  table.size
+}
+
+/// Returns the maximum size of the dynamic table in bytes.
+pub fn dynamic_max_size(table: DynamicTable) -> Int {
+  table.max_size
+}
+
+/// Returns the number of entries in the dynamic table.
+pub fn dynamic_length(table: DynamicTable) -> Int {
+  table.length
+}
+
 /// Creates an empty dynamic table with the specified maximum size in bytes.
 /// Default maximum size per RFC 7541 is 4096 bytes.
 pub fn new_dynamic(max_size: Int) -> DynamicTable {
@@ -730,10 +749,7 @@ pub fn clear_dynamic(table: DynamicTable) -> DynamicTable {
 /// SETTINGS frame. Records the pending resize so that encode_header_block
 /// automatically emits the required size update instructions at the start of
 /// the next header block (RFC 7541 Section 4.2).
-pub fn set_max_size(
-  table: DynamicTable,
-  new_max_size: Int,
-) -> DynamicTable {
+pub fn set_max_size(table: DynamicTable, new_max_size: Int) -> DynamicTable {
   let pending = case table.pending_resize {
     None -> new_max_size
     Some(current_min) -> int.min(current_min, new_max_size)
@@ -781,11 +797,11 @@ fn do_evict_until_fits(
     False ->
       case reversed_entries {
         [] -> #([], size, length)
-        [#(name, value), ..rest] -> {
+        [#(name, value), ..remaining] -> {
           let freed_size = calculate_entry_size(name, value)
 
           do_evict_until_fits(
-            rest,
+            remaining,
             size - freed_size,
             length - 1,
             needed_space,
@@ -830,9 +846,9 @@ fn do_evict_to_size(
     False ->
       case reversed_entries {
         [] -> #([], size, length)
-        [#(name, value), ..rest] -> {
+        [#(name, value), ..remaining] -> {
           let freed_size = calculate_entry_size(name, value)
-          do_evict_to_size(rest, size - freed_size, length - 1, target_size)
+          do_evict_to_size(remaining, size - freed_size, length - 1, target_size)
         }
       }
   }
@@ -914,7 +930,27 @@ pub fn decode_header_block(
   data: BitArray,
   dynamic_table: DynamicTable,
 ) -> Result(#(List(HeaderField), DynamicTable), DecodeError) {
-  decode_header_fields(data, dynamic_table, [])
+  use #(data, table) <- result.try(decode_size_updates(data, dynamic_table))
+  decode_header_fields(data, table, [])
+}
+
+fn decode_size_updates(
+  data: BitArray,
+  table: DynamicTable,
+) -> Result(#(BitArray, DynamicTable), DecodeError) {
+  case data {
+    // 6.3 Dynamic Table Size Update
+    //   0   1   2   3   4   5   6   7
+    // +---+---+---+---+---+---+---+---+
+    // | 0 | 0 | 1 |   Max size (5+)   |
+    // +---+---+---+-------------------+
+    <<0:2, 1:1, _:5, _:bits>> -> {
+      use #(new_size, remaining) <- result.try(decode_integer(data, 5))
+      let table = resize_dynamic(table, new_size)
+      decode_size_updates(remaining, table)
+    }
+    _ -> Ok(#(data, table))
+  }
 }
 
 fn decode_header_fields(
@@ -949,17 +985,6 @@ fn decode_header_fields(
       let table = add_dynamic(table, name, value)
       let header = HeaderField(name:, value:, indexing: WithIndexing)
       decode_header_fields(remaining, table, [header, ..acc])
-    }
-
-    // 6.3 Dynamic Table Size Update
-    //   0   1   2   3   4   5   6   7
-    // +---+---+---+---+---+---+---+---+
-    // | 0 | 0 | 1 |   Max size (5+)   |
-    // +---+---+---+-------------------+
-    <<0:2, 1:1, _:5, _:bits>> -> {
-      use #(new_size, remaining) <- result.try(decode_integer(data, 5))
-      let table = resize_dynamic(table, new_size)
-      decode_header_fields(remaining, table, acc)
     }
 
     // 6.2.3 Literal Header Field Never Indexed
@@ -1035,14 +1060,14 @@ pub fn encode_header_block(
   headers: List(HeaderField),
   dynamic_table: DynamicTable,
   huffman huffman: Bool,
-) -> #(BitArray, DynamicTable) {
+) -> #(BytesTree, DynamicTable) {
   let #(table, acc) = emit_pending_resizes(dynamic_table)
   encode_header_fields(headers, table, huffman, acc)
 }
 
-fn emit_pending_resizes(table: DynamicTable) -> #(DynamicTable, BitArray) {
+fn emit_pending_resizes(table: DynamicTable) -> #(DynamicTable, BytesTree) {
   case table.pending_resize {
-    None -> #(table, <<>>)
+    None -> #(table, bytes_tree.new())
     Some(min_size) -> {
       let table = DynamicTable(..table, pending_resize: None)
       case min_size < table.max_size {
@@ -1050,10 +1075,18 @@ fn emit_pending_resizes(table: DynamicTable) -> #(DynamicTable, BitArray) {
         True -> {
           let first = encode_table_size_update(min_size)
           let second = encode_table_size_update(table.max_size)
-          #(table, <<first:bits, second:bits>>)
+          #(
+            table,
+            bytes_tree.new()
+              |> bytes_tree.append(first)
+              |> bytes_tree.append(second),
+          )
         }
         // Size only went down or stayed unchanged; emit final.
-        False -> #(table, encode_table_size_update(min_size))
+        False -> #(
+          table,
+          encode_table_size_update(min_size) |> bytes_tree.from_bit_array,
+        )
       }
     }
   }
@@ -1063,13 +1096,18 @@ fn encode_header_fields(
   headers: List(HeaderField),
   table: DynamicTable,
   huffman: Bool,
-  acc: BitArray,
-) -> #(BitArray, DynamicTable) {
+  acc: BytesTree,
+) -> #(BytesTree, DynamicTable) {
   case headers {
     [] -> #(acc, table)
-    [header, ..rest] -> {
+    [header, ..remaining] -> {
       let #(encoded, table) = encode_header_field(header, table, huffman)
-      encode_header_fields(rest, table, huffman, <<acc:bits, encoded:bits>>)
+      encode_header_fields(
+        remaining,
+        table,
+        huffman,
+        bytes_tree.append(acc, encoded),
+      )
     }
   }
 }
