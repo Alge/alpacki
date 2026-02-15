@@ -25,8 +25,7 @@
 ////       "lookup_dynamic",
 ////       "match_dynamic",
 ////       "resize_dynamic",
-////       "clear_dynamic",
-////       "set_max_size"
+////       "clear_dynamic"
 ////     ]
 ////   },
 ////   {
@@ -42,7 +41,8 @@
 ////      "decode_integer",
 ////      "encode_integer",
 ////      "decode_string_literal",
-////      "encode_string_literal"
+////      "encode_string_literal",
+////      "encode_table_size_update"
 ////     ]
 ////   },
 ////   {
@@ -118,6 +118,10 @@ pub type DecodeError {
   Incomplete
   IntegerOverflow
   InvalidEncoding
+  InvalidTableIndex
+  InvalidHeaderName
+  InvalidHeaderValue
+  InvalidHuffmanEncoding
 }
 
 // Primitive Type Representations
@@ -350,7 +354,6 @@ pub fn decode_string_literal(
 /// Accepts the raw octets to encode and a flag indicating whether to use
 /// Huffman encoding. Returns the encoded BitArray.
 ///
-///
 /// For more information, see Section 5.2:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
 ///
@@ -395,7 +398,7 @@ pub fn encode_string_literal(data: BitArray, huffman huffman: Bool) -> BitArray 
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
 pub fn decode_huffman(data: BitArray) -> Result(BitArray, DecodeError) {
   huffman.decode(data, <<>>)
-  |> result.replace_error(InvalidEncoding)
+  |> result.replace_error(InvalidHuffmanEncoding)
 }
 
 /// Encodes data using Huffman encoding according to RFC 7541 Appendix B.
@@ -734,22 +737,12 @@ fn do_match_dynamic(
   }
 }
 
-/// Updates the dynamic table maximum size. Evicts oldest entries if current
-/// size exceeds the new maximum.
+/// Resizes the dynamic table, typically in response to a SETTINGS frame.
+/// Evicts oldest entries if current size exceeds the new maximum. Records the
+/// pending resize so that encode_header_block automatically emits the required
+/// size update instructions at the start of the next header block
+/// (RFC 7541 Section 4.2).
 pub fn resize_dynamic(table: DynamicTable, new_max_size: Int) -> DynamicTable {
-  DynamicTable(..evict_to_size(table, new_max_size), max_size: new_max_size)
-}
-
-/// Removes all entries from the dynamic table while preserving maximum size.
-pub fn clear_dynamic(table: DynamicTable) -> DynamicTable {
-  DynamicTable(..table, entries: [], size: 0, length: 0)
-}
-
-/// Sets the maximum size of the dynamic table, typically in response to a
-/// SETTINGS frame. Records the pending resize so that encode_header_block
-/// automatically emits the required size update instructions at the start of
-/// the next header block (RFC 7541 Section 4.2).
-pub fn set_max_size(table: DynamicTable, new_max_size: Int) -> DynamicTable {
   let pending = case table.pending_resize {
     None -> new_max_size
     Some(current_min) -> int.min(current_min, new_max_size)
@@ -759,6 +752,11 @@ pub fn set_max_size(table: DynamicTable, new_max_size: Int) -> DynamicTable {
     max_size: new_max_size,
     pending_resize: Some(pending),
   )
+}
+
+/// Removes all entries from the dynamic table while preserving maximum size.
+pub fn clear_dynamic(table: DynamicTable) -> DynamicTable {
+  DynamicTable(..table, entries: [], size: 0, length: 0)
 }
 
 // Evicts oldest entries until there is space for the new entry.
@@ -873,9 +871,9 @@ pub type TableMatch {
 /// Returns FullMatch with index if both match, NameMatch with index if only
 /// name matches, or NoMatch.
 pub fn match(
+  dynamic_table: DynamicTable,
   name: String,
   value: String,
-  dynamic_table: DynamicTable,
 ) -> TableMatch {
   case match_static(name, value) {
     NameMatch(static_index) -> {
@@ -892,8 +890,8 @@ pub fn match(
 /// Looks up an entry by index in the static table or dynamic table. Returns
 /// the name-value pair or an error if the index is invalid.
 pub fn lookup(
-  index: Int,
   dynamic_table: DynamicTable,
+  index: Int,
 ) -> Result(#(String, String), Nil) {
   case index < dynamic_table_start {
     True -> lookup_static(index)
@@ -946,7 +944,8 @@ fn decode_size_updates(
     // +---+---+---+-------------------+
     <<0:2, 1:1, _:5, _:bits>> -> {
       use #(new_size, remaining) <- result.try(decode_integer(data, 5))
-      let table = resize_dynamic(table, new_size)
+      let table =
+        DynamicTable(..evict_to_size(table, new_size), max_size: new_size)
       decode_size_updates(remaining, table)
     }
     _ -> Ok(#(data, table))
@@ -969,7 +968,7 @@ fn decode_header_fields(
     <<1:1, _:7, _:bits>> -> {
       use #(index, remaining) <- result.try(decode_integer(data, 7))
       use #(name, value) <- result.try(
-        lookup(index, table) |> result.replace_error(InvalidEncoding),
+        lookup(table, index) |> result.replace_error(InvalidTableIndex),
       )
       let header = HeaderField(name:, value:, indexing: WithIndexing)
       decode_header_fields(remaining, table, [header, ..acc])
@@ -1026,7 +1025,7 @@ fn decode_literal(
       use #(name, remaining) <- result.try(decode_string_literal(remaining))
       use name <- result.try(
         validate_header_name(name)
-        |> result.replace_error(InvalidEncoding),
+        |> result.replace_error(InvalidHeaderName),
       )
 
       Ok(#(name, remaining))
@@ -1034,7 +1033,7 @@ fn decode_literal(
     // That is a name from the table.
     _ -> {
       use #(name, _value) <- result.try(
-        lookup(index, table) |> result.replace_error(InvalidEncoding),
+        lookup(table, index) |> result.replace_error(InvalidTableIndex),
       )
       Ok(#(name, remaining))
     }
@@ -1042,7 +1041,7 @@ fn decode_literal(
 
   use #(value, remaining) <- result.try(decode_string_literal(remaining))
   use value <- result.try(
-    bit_array.to_string(value) |> result.replace_error(InvalidEncoding),
+    bit_array.to_string(value) |> result.replace_error(InvalidHeaderValue),
   )
 
   Ok(#(name, value, remaining))
@@ -1117,7 +1116,7 @@ fn encode_header_field(
   table: DynamicTable,
   huffman: Bool,
 ) -> #(BitArray, DynamicTable) {
-  case match(header.name, header.value, table), header.indexing {
+  case match(table, header.name, header.value), header.indexing {
     // Full match; always use indexed representation (hpax approach).
     FullMatch(index), _ -> #(encode_indexed(index), table)
 
@@ -1204,7 +1203,20 @@ fn encode_literal_new_name(
   <<index:bits, name:bits, value:bits>>
 }
 
-// Encodes a dynamic table size update instruction (Section 6.3).
-fn encode_table_size_update(new_size: Int) -> BitArray {
+/// Encodes a dynamic table size update instruction. Used to signal the decoder
+/// about a change in the maximum dynamic table size.
+///
+/// For more information, see Section 6.3:
+/// - https://datatracker.ietf.org/doc/html/rfc7541#section-6.3
+///
+/// ---
+///
+/// ```
+///   0   1   2   3   4   5   6   7
+/// +---+---+---+---+---+---+---+---+
+/// | 0 | 0 | 1 |   Max size (5+)   |
+/// +---+---+---+-------------------+
+/// ```
+pub fn encode_table_size_update(new_size: Int) -> BitArray {
   encode_prefixed_integer(new_size, 5, 0x20)
 }
