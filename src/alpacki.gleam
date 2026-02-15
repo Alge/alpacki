@@ -4,8 +4,7 @@
 ////     header: "Headers",
 ////     functions: [
 ////       "decode_header_block",
-////       "encode_header_block",
-////       "encode_table_size_update"
+////       "encode_header_block"
 ////     ]
 ////   },
 ////   {
@@ -23,7 +22,8 @@
 ////       "lookup_dynamic",
 ////       "match_dynamic",
 ////       "resize_dynamic",
-////       "clear_dynamic"
+////       "clear_dynamic",
+////       "set_max_size"
 ////     ]
 ////   },
 ////   {
@@ -104,7 +104,9 @@
 
 import alpacki/internal/huffman
 import gleam/bit_array
+import gleam/int
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 
@@ -611,6 +613,7 @@ pub opaque type DynamicTable {
     size: Int,
     max_size: Int,
     length: Int,
+    pending_resize: Option(Int),
   )
 }
 
@@ -623,7 +626,7 @@ const entry_overhead = 32
 /// Creates an empty dynamic table with the specified maximum size in bytes.
 /// Default maximum size per RFC 7541 is 4096 bytes.
 pub fn new_dynamic(max_size: Int) -> DynamicTable {
-  DynamicTable(entries: [], size: 0, max_size:, length: 0)
+  DynamicTable(entries: [], size: 0, max_size:, length: 0, pending_resize: None)
 }
 
 /// Adds an entry to the dynamic table at index 62. Evicts oldest entries if
@@ -641,9 +644,9 @@ pub fn add_dynamic(
     False -> {
       let table = evict_until_fits(table, entry_size)
       DynamicTable(
+        ..table,
         entries: [#(name, value), ..table.entries],
         size: table.size + entry_size,
-        max_size: table.max_size,
         length: table.length + 1,
       )
     }
@@ -723,6 +726,25 @@ pub fn clear_dynamic(table: DynamicTable) -> DynamicTable {
   DynamicTable(..table, entries: [], size: 0, length: 0)
 }
 
+/// Sets the maximum size of the dynamic table, typically in response to a
+/// SETTINGS frame. Records the pending resize so that encode_header_block
+/// automatically emits the required size update instructions at the start of
+/// the next header block (RFC 7541 Section 4.2).
+pub fn set_max_size(
+  table: DynamicTable,
+  new_max_size: Int,
+) -> DynamicTable {
+  let pending = case table.pending_resize {
+    None -> new_max_size
+    Some(current_min) -> int.min(current_min, new_max_size)
+  }
+  DynamicTable(
+    ..evict_to_size(table, new_max_size),
+    max_size: new_max_size,
+    pending_resize: Some(pending),
+  )
+}
+
 // Evicts oldest entries until there is space for the new entry.
 fn evict_until_fits(table: DynamicTable, needed_space: Int) -> DynamicTable {
   case table.size + needed_space <= table.max_size {
@@ -738,9 +760,9 @@ fn evict_until_fits(table: DynamicTable, needed_space: Int) -> DynamicTable {
         )
 
       DynamicTable(
+        ..table,
         entries: list.reverse(reversed_entries),
         size: new_size,
-        max_size: table.max_size,
         length: new_length,
       )
     }
@@ -788,9 +810,9 @@ fn evict_to_size(table: DynamicTable, target_size: Int) -> DynamicTable {
         )
 
       DynamicTable(
+        ..table,
         entries: list.reverse(reversed_entries),
         size: new_size,
-        max_size: table.max_size,
         length: new_length,
       )
     }
@@ -1014,7 +1036,27 @@ pub fn encode_header_block(
   dynamic_table: DynamicTable,
   huffman huffman: Bool,
 ) -> #(BitArray, DynamicTable) {
-  encode_header_fields(headers, dynamic_table, huffman, <<>>)
+  let #(table, acc) = emit_pending_resizes(dynamic_table)
+  encode_header_fields(headers, table, huffman, acc)
+}
+
+fn emit_pending_resizes(table: DynamicTable) -> #(DynamicTable, BitArray) {
+  case table.pending_resize {
+    None -> #(table, <<>>)
+    Some(min_size) -> {
+      let table = DynamicTable(..table, pending_resize: None)
+      case min_size < table.max_size {
+        // Size went down then back up; emit minimum then final.
+        True -> {
+          let first = encode_table_size_update(min_size)
+          let second = encode_table_size_update(table.max_size)
+          #(table, <<first:bits, second:bits>>)
+        }
+        // Size only went down or stayed unchanged; emit final.
+        False -> #(table, encode_table_size_update(min_size))
+      }
+    }
+  }
 }
 
 fn encode_header_fields(
@@ -1124,10 +1166,7 @@ fn encode_literal_new_name(
   <<index:bits, name:bits, value:bits>>
 }
 
-/// Encodes a dynamic table size update instruction.
-///
-/// For more information, see Section 6.3:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-6.3
-pub fn encode_table_size_update(new_size: Int) -> BitArray {
+// Encodes a dynamic table size update instruction (Section 6.3).
+fn encode_table_size_update(new_size: Int) -> BitArray {
   encode_prefixed_integer(new_size, 5, 0x20)
 }
