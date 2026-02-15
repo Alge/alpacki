@@ -1,6 +1,14 @@
 //// <script>
 //// const docs = [
 ////   {
+////     header: "Headers",
+////     functions: [
+////       "decode_header_block",
+////       "encode_header_block",
+////       "encode_table_size_update"
+////     ]
+////   },
+////   {
 ////     header: "Tables",
 ////     functions: [
 ////       "match",
@@ -858,8 +866,21 @@ pub fn lookup(
 // Headers
 // -----------------------------------------------------------------------------
 
+/// Indexing mode for a header field, controlling how the encoder represents it
+/// on the wire and how the decoder preserves the original signal.
+pub type Indexing {
+  /// 6.2.1 — Store in the dynamic table for future reference.
+  WithIndexing
+  /// 6.2.2 — Do not store. Useful for headers that change every request.
+  WithoutIndexing
+  /// 6.2.3 — Do not store, and signal to intermediaries that this value is
+  /// sensitive and must never be compressed. Intermediaries MUST preserve this
+  /// representation (RFC 7541 Section 7.1.3).
+  NeverIndexed
+}
+
 pub type HeaderField {
-  HeaderField(name: String, value: String, sensitive: Bool)
+  HeaderField(name: String, value: String, indexing: Indexing)
 }
 
 /// Decodes a complete header block fragment into a list of header fields,
@@ -892,7 +913,7 @@ fn decode_header_fields(
       use #(name, value) <- result.try(
         lookup(index, table) |> result.replace_error(InvalidEncoding),
       )
-      let header = HeaderField(name:, value:, sensitive: False)
+      let header = HeaderField(name:, value:, indexing: WithIndexing)
       decode_header_fields(remaining, table, [header, ..acc])
     }
 
@@ -904,7 +925,7 @@ fn decode_header_fields(
     <<0:1, 1:1, _:6, _:bits>> -> {
       use #(name, value, remaining) <- result.try(decode_literal(data, table, 6))
       let table = add_dynamic(table, name, value)
-      let header = HeaderField(name:, value:, sensitive: False)
+      let header = HeaderField(name:, value:, indexing: WithIndexing)
       decode_header_fields(remaining, table, [header, ..acc])
     }
 
@@ -926,7 +947,7 @@ fn decode_header_fields(
     // +---+---+---+---+---------------+
     <<0:3, 1:1, _:4, _:bits>> -> {
       use #(name, value, remaining) <- result.try(decode_literal(data, table, 4))
-      let header = HeaderField(name:, value:, sensitive: True)
+      let header = HeaderField(name:, value:, indexing: NeverIndexed)
       decode_header_fields(remaining, table, [header, ..acc])
     }
 
@@ -937,7 +958,7 @@ fn decode_header_fields(
     // +---+---+---+---+---------------+
     <<0:4, _:4, _:bits>> -> {
       use #(name, value, remaining) <- result.try(decode_literal(data, table, 4))
-      let header = HeaderField(name:, value:, sensitive: False)
+      let header = HeaderField(name:, value:, indexing: WithoutIndexing)
       decode_header_fields(remaining, table, [header, ..acc])
     }
 
@@ -972,14 +993,141 @@ fn decode_literal(
     }
   })
 
-  // Value is always a string literal.
-  use #(value_bits, rest) <- result.try(decode_string_literal(remaining))
+  use #(value, remaining) <- result.try(decode_string_literal(remaining))
   use value <- result.try(
-    bit_array.to_string(value_bits) |> result.replace_error(InvalidEncoding),
+    bit_array.to_string(value) |> result.replace_error(InvalidEncoding),
   )
 
-  Ok(#(name, value, rest))
+  Ok(#(name, value, remaining))
 }
 
 @external(erlang, "alpacki_ffi", "validate_header_name")
 fn validate_header_name(data: BitArray) -> Result(String, Nil)
+
+/// Encodes a list of header fields into a header block fragment, updating the
+/// dynamic table as headers are added.
+///
+/// For more information, see Section 6:
+/// - https://datatracker.ietf.org/doc/html/rfc7541#section-6
+pub fn encode_header_block(
+  headers: List(HeaderField),
+  dynamic_table: DynamicTable,
+  huffman huffman: Bool,
+) -> #(BitArray, DynamicTable) {
+  encode_header_fields(headers, dynamic_table, huffman, <<>>)
+}
+
+fn encode_header_fields(
+  headers: List(HeaderField),
+  table: DynamicTable,
+  huffman: Bool,
+  acc: BitArray,
+) -> #(BitArray, DynamicTable) {
+  case headers {
+    [] -> #(acc, table)
+    [header, ..rest] -> {
+      let #(encoded, table) = encode_header_field(header, table, huffman)
+      encode_header_fields(rest, table, huffman, <<acc:bits, encoded:bits>>)
+    }
+  }
+}
+
+fn encode_header_field(
+  header: HeaderField,
+  table: DynamicTable,
+  huffman: Bool,
+) -> #(BitArray, DynamicTable) {
+  case match(header.name, header.value, table), header.indexing {
+    // Full match; always use indexed representation (hpax approach).
+    FullMatch(index), _ -> #(encode_indexed(index), table)
+
+    // Name match + store; literal with incremental indexing.
+    NameMatch(index), WithIndexing -> {
+      let encoded = encode_literal(index, header.value, 6, 0x40, huffman)
+      #(encoded, add_dynamic(table, header.name, header.value))
+    }
+
+    // Name match + don't store; literal without indexing.
+    NameMatch(index), WithoutIndexing -> #(
+      encode_literal(index, header.value, 4, 0x00, huffman),
+      table,
+    )
+
+    // Name match + sensitive; literal never indexed.
+    NameMatch(index), NeverIndexed -> #(
+      encode_literal(index, header.value, 4, 0x10, huffman),
+      table,
+    )
+
+    // No match + store; literal with incremental indexing, new name.
+    NoMatch, WithIndexing -> {
+      let encoded =
+        encode_literal_new_name(header.name, header.value, 6, 0x40, huffman)
+      #(encoded, add_dynamic(table, header.name, header.value))
+    }
+
+    // No match + don't store; literal without indexing, new name.
+    NoMatch, WithoutIndexing -> #(
+      encode_literal_new_name(header.name, header.value, 4, 0x00, huffman),
+      table,
+    )
+
+    // No match + sensitive; literal never indexed, new name.
+    NoMatch, NeverIndexed -> #(
+      encode_literal_new_name(header.name, header.value, 4, 0x10, huffman),
+      table,
+    )
+  }
+}
+
+// Encodes an integer with type bits set in the upper bits of the first byte.
+fn encode_prefixed_integer(
+  integer: Int,
+  prefix: Int,
+  type_bits: Int,
+) -> BitArray {
+  case encode_integer(integer, prefix:) {
+    <<byte:8, remaining:bits>> -> <<{ byte + type_bits }:8, remaining:bits>>
+    _ -> panic as "Unreachable pattern for encoded integer!"
+  }
+}
+
+// 6.1 Indexed Header Field Representation.
+fn encode_indexed(index: Int) -> BitArray {
+  encode_prefixed_integer(index, 7, 0x80)
+}
+
+// 6.2.x Literal Header Field with name referenced by index.
+fn encode_literal(
+  index: Int,
+  value: String,
+  prefix: Int,
+  type_bits: Int,
+  huffman: Bool,
+) -> BitArray {
+  let index = encode_prefixed_integer(index, prefix, type_bits)
+  let value = encode_string_literal(<<value:utf8>>, huffman:)
+  <<index:bits, value:bits>>
+}
+
+// 6.2.x Literal Header Field with new name (index 0).
+fn encode_literal_new_name(
+  name: String,
+  value: String,
+  prefix: Int,
+  type_bits: Int,
+  huffman: Bool,
+) -> BitArray {
+  let index = encode_prefixed_integer(0, prefix, type_bits)
+  let name = encode_string_literal(<<name:utf8>>, huffman:)
+  let value = encode_string_literal(<<value:utf8>>, huffman:)
+  <<index:bits, name:bits, value:bits>>
+}
+
+/// Encodes a dynamic table size update instruction.
+///
+/// For more information, see Section 6.3:
+/// - https://datatracker.ietf.org/doc/html/rfc7541#section-6.3
+pub fn encode_table_size_update(new_size: Int) -> BitArray {
+  encode_prefixed_integer(new_size, 5, 0x20)
+}
