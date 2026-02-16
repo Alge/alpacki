@@ -114,13 +114,21 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 
+/// Errors that can occur when decoding a header block or its components.
 pub type DecodeError {
+  /// The input ended before a complete value could be decoded.
   Incomplete
+  /// An encoded integer exceeded the maximum supported value.
   IntegerOverflow
+  /// The data contained an unrecognizable bit pattern.
   InvalidEncoding
+  /// A header field referenced a table index that does not exist.
   InvalidTableIndex
+  /// A literal header name contained bytes outside the allowed range.
   InvalidHeaderName
+  /// A header value contained bytes that are not valid UTF-8.
   InvalidHeaderValue
+  /// Huffman-encoded data was malformed or had invalid padding.
   InvalidHuffmanEncoding
 }
 
@@ -129,7 +137,7 @@ pub type DecodeError {
 
 /// Decodes an integer used to represent name indexes, header field indexes,
 /// or string lengths. It accepts a BitArray starting at the byte containing the
-/// prefix, and the number of bits of the prefix (N). Returns either the decoded
+/// prefix, and the number of bits of the prefix. Returns either the decoded
 /// integer with the remaining BitArray data, or a decode error.
 ///
 /// The prefix size is always between 1 and 8 bits. Passing another integer will
@@ -388,8 +396,7 @@ pub fn encode_string_literal(data: BitArray, huffman huffman: Bool) -> BitArray 
 /// Decodes Huffman-encoded data according to RFC 7541 Appendix B.
 ///
 /// Accepts Huffman-encoded bits and returns the decoded byte sequence. The
-/// input must be properly padded to an octet boundary with valid EOS padding
-/// (1-7 bits of all 1s).
+/// input must be properly padded to an octet boundary with valid EOS padding.
 ///
 /// For more information, see Section 5.2:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
@@ -862,16 +869,26 @@ fn calculate_entry_size(name: String, value: String) -> Int {
 // Tables
 // -----------------------------------------------------------------------------
 
-/// Result of matching a header against a table.
+/// Result of searching a table for a header name-value pair. The index refers
+/// to the table's address space: 1–61 for static entries, 62 and above for
+/// dynamic entries.
 pub type TableMatch {
+  /// Both name and value matched an entry at the given index.
   FullMatch(index: Int)
+  /// Only the name matched; the value at this index differs.
   NameMatch(index: Int)
+  /// Neither name nor value matched any entry.
   NoMatch
 }
 
-/// Searches static and dynamic tables for an entry matching the name and value.
-/// Returns FullMatch with index if both match, NameMatch with index if only
-/// name matches, or NoMatch.
+/// Searches the static and dynamic tables for the best match for a header
+/// name-value pair. Checks the static table first, then the dynamic table,
+/// and returns the most useful match found.
+///
+/// A full match in the static table wins immediately. When the static table
+/// has only a name match, the dynamic table is still checked for a full
+/// match. A static name match is preferred over a dynamic name match. When
+/// the static table has no match, the dynamic table is searched alone.
 pub fn match(
   dynamic_table: DynamicTable,
   name: String,
@@ -889,8 +906,10 @@ pub fn match(
   }
 }
 
-/// Looks up an entry by index in the static table or dynamic table. Returns
-/// the name-value pair or an error if the index is invalid.
+/// Looks up a header by index across the static and dynamic tables. Indices
+/// 1 to 61 address the static table, and indices 62 and above address the
+/// dynamic table starting from the most recently added entry. Returns the
+/// name-value pair or an error if the index is out of range.
 pub fn lookup(
   dynamic_table: DynamicTable,
   index: Int,
@@ -917,6 +936,9 @@ pub type Indexing {
   NeverIndexed
 }
 
+/// A header field as it flows through the encoder and decoder. When encoding,
+/// the indexing mode controls the wire representation. When decoding, it
+/// preserves the representation used by the sender.
 pub type HeaderField {
   HeaderField(name: String, value: String, indexing: Indexing)
 }
@@ -924,8 +946,37 @@ pub type HeaderField {
 /// Decodes a complete header block fragment into a list of header fields,
 /// updating the dynamic table as specified by the encoded instructions.
 ///
+/// Any dynamic table size update instructions at the start of the block are
+/// processed automatically before header fields are decoded.
+///
 /// For more information, see Section 6:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-6
+///
+/// ---
+///
+/// A header block is a sequence of header field representations, each
+/// identified by its first-byte bit pattern:
+///
+/// ```
+///   0   1   2   3   4   5   6   7
+/// +---+---+---+---+---+---+---+---+
+/// | 1 |        Index (7+)         | 6.1 Indexed
+/// +---+---------------------------+
+/// | 0 | 1 |      Index (6+)       | 6.2.1 Literal, With Indexing
+/// +---+---+-----------------------+
+/// | 0 | 0 | 0 | 0 |  Index (4+)   | 6.2.2 Literal, Without Indexing
+/// +---+---+---+---+---------------+
+/// | 0 | 0 | 0 | 1 |  Index (4+)   | 6.2.3 Literal, Never Indexed
+/// +---+---+---+---+---------------+
+/// | 0 | 0 | 1 |   Max size (5+)   | 6.3 Dynamic Table Size Update
+/// +---+---+---+-------------------+
+/// ```
+///
+/// Indexed representations (6.1) reference an existing table entry. Literal
+/// representations (6.2.x) carry the value on the wire, optionally referencing
+/// a table entry for the name. The decoder preserves each header's indexing
+/// mode in the returned HeaderField, allowing intermediaries to respect
+/// NeverIndexed signals (RFC 7541 Section 7.1.3).
 pub fn decode_header_block(
   data: BitArray,
   dynamic_table: DynamicTable,
@@ -1053,10 +1104,30 @@ fn decode_literal(
 fn validate_header_name(data: BitArray) -> Result(String, Nil)
 
 /// Encodes a list of header fields into a header block fragment, updating the
-/// dynamic table as headers are added.
+/// dynamic table as headers are added. Returns the encoded block as a
+/// BytesTree and the updated dynamic table. When huffman is True, all name
+/// and value strings use Huffman encoding.
+///
+/// If resize_dynamic was called since the last encoding, the required dynamic
+/// table size update instructions are prepended automatically
+/// (RFC 7541 Section 4.2).
 ///
 /// For more information, see Section 6:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-6
+///
+/// ---
+///
+/// The encoder looks up each header in the static and dynamic tables and
+/// selects the most compact representation. A full match (both name and value
+/// found) always uses the indexed representation (6.1), regardless of the
+/// header's indexing mode — the entry is already visible to the decoder, so
+/// referencing it leaks no new information.
+///
+/// When only the name matches or nothing matches, the indexing mode selects
+/// the literal representation: WithIndexing uses incremental indexing (6.2.1)
+/// and adds the entry to the dynamic table. WithoutIndexing sends the value
+/// without storing it (6.2.2). NeverIndexed signals that intermediaries must
+/// never compress this value (6.2.3).
 pub fn encode_header_block(
   headers: List(HeaderField),
   dynamic_table: DynamicTable,
