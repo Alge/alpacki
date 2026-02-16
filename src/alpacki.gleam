@@ -279,10 +279,7 @@ pub fn encode_integer(integer: Int, prefix prefix: Int) -> BitArray {
 }
 
 // Encodes continuation bytes using base-128 variable-length encoding.
-fn encode_integer_after_prefix(
-  remaining: Int,
-  acc: BitArray,
-) -> BitArray {
+fn encode_integer_after_prefix(remaining: Int, acc: BitArray) -> BitArray {
   case remaining < 128 {
     True -> <<acc:bits, 0:1, remaining:7>>
     False ->
@@ -846,7 +843,12 @@ fn do_evict_to_size(
         [] -> #([], size, length)
         [#(name, value), ..remaining] -> {
           let freed_size = calculate_entry_size(name, value)
-          do_evict_to_size(remaining, size - freed_size, length - 1, target_size)
+          do_evict_to_size(
+            remaining,
+            size - freed_size,
+            length - 1,
+            target_size,
+          )
         }
       }
   }

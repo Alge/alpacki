@@ -68,8 +68,7 @@ pub fn dynamic_add_two_entries_ordering_test() {
 }
 
 pub fn dynamic_lookup_out_of_range_test() {
-  let table =
-    alpacki.new_dynamic(4096) |> alpacki.add_dynamic("server", "ewe")
+  let table = alpacki.new_dynamic(4096) |> alpacki.add_dynamic("server", "ewe")
   assert alpacki.lookup_dynamic(table, 61) == Error(Nil)
   assert alpacki.lookup_dynamic(table, 63) == Error(Nil)
 }
@@ -82,8 +81,7 @@ pub fn dynamic_evict_oldest_test() {
     |> alpacki.add_dynamic("content-type", "text/html")
   assert alpacki.dynamic_length(table) == 1
   assert alpacki.dynamic_size(table) == 53
-  assert alpacki.lookup_dynamic(table, 62)
-    == Ok(#("content-type", "text/html"))
+  assert alpacki.lookup_dynamic(table, 62) == Ok(#("content-type", "text/html"))
 }
 
 pub fn dynamic_add_oversized_clears_test() {
@@ -106,8 +104,7 @@ pub fn dynamic_evict_multiple_test() {
     |> alpacki.add_dynamic("content-type", "text/html")
   assert alpacki.dynamic_length(table) == 2
   assert alpacki.dynamic_size(table) == 94
-  assert alpacki.lookup_dynamic(table, 62)
-    == Ok(#("content-type", "text/html"))
+  assert alpacki.lookup_dynamic(table, 62) == Ok(#("content-type", "text/html"))
   assert alpacki.lookup_dynamic(table, 63) == Ok(#("server", "ewe"))
 }
 
@@ -159,8 +156,7 @@ pub fn dynamic_resize_down_evicts_test() {
     |> alpacki.resize_dynamic(55)
   assert alpacki.dynamic_length(table) == 1
   assert alpacki.dynamic_max_size(table) == 55
-  assert alpacki.lookup_dynamic(table, 62)
-    == Ok(#("content-type", "text/html"))
+  assert alpacki.lookup_dynamic(table, 62) == Ok(#("content-type", "text/html"))
 }
 
 pub fn dynamic_resize_to_zero_test() {
@@ -207,23 +203,20 @@ pub fn lookup_dispatches_test() {
 }
 
 pub fn match_prefers_static_full_match_test() {
-  let table =
-    alpacki.new_dynamic(4096) |> alpacki.add_dynamic(":method", "GET")
+  let table = alpacki.new_dynamic(4096) |> alpacki.add_dynamic(":method", "GET")
   assert alpacki.match(table, ":method", "GET") == alpacki.FullMatch(2)
 }
 
 // Static has :status NameMatch(8) for unknown values. Dynamic has :status 418
 // FullMatch(62). Dynamic FullMatch should win.
 pub fn match_prefers_dynamic_full_over_static_name_test() {
-  let table =
-    alpacki.new_dynamic(4096) |> alpacki.add_dynamic(":status", "418")
+  let table = alpacki.new_dynamic(4096) |> alpacki.add_dynamic(":status", "418")
   assert alpacki.match(table, ":status", "418") == alpacki.FullMatch(62)
 }
 
 // Both tables have name-only match for :status. Static NameMatch(8) should win.
 pub fn match_prefers_static_name_over_dynamic_name_test() {
-  let table =
-    alpacki.new_dynamic(4096) |> alpacki.add_dynamic(":status", "418")
+  let table = alpacki.new_dynamic(4096) |> alpacki.add_dynamic(":status", "418")
   assert alpacki.match(table, ":status", "501") == alpacki.NameMatch(8)
 }
 
@@ -233,7 +226,6 @@ pub fn match_falls_through_to_dynamic_test() {
     |> alpacki.add_dynamic("x-request-id", "7f3a9b2e")
   assert alpacki.match(table, "x-request-id", "7f3a9b2e")
     == alpacki.FullMatch(62)
-  assert alpacki.match(table, "x-request-id", "other")
-    == alpacki.NameMatch(62)
+  assert alpacki.match(table, "x-request-id", "other") == alpacki.NameMatch(62)
   assert alpacki.match(table, "x-unknown", "val") == alpacki.NoMatch
 }
