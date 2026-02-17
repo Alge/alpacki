@@ -41,9 +41,32 @@ The `Indexing` type on each `HeaderField` controls the wire representation:
 `WithoutIndexing` sends it without storing, and `NeverIndexed` signals that
 the value is sensitive and must never be compressed by intermediaries.
 
+# Resizing the dynamic table
+
+When the remote peer sends a SETTINGS frame that changes
+`SETTINGS_HEADER_TABLE_SIZE`, call `resize_dynamic` on the **encoder's**
+table. The next `encode_header_block` call will automatically prepend the
+required size update instructions before the header fields.
+
+```gleam
+// Remote peer reduced the table size to 2048 bytes.
+let encoder_table = alpacki.resize_dynamic(encoder_table, 2048)
+
+// The next encoded block will start with a size update instruction.
+let #(data, encoder_table) =
+  alpacki.encode_header_block(headers, encoder_table, huffman: True)
+```
+
+On the decoder side, nothing special is needed, as `decode_header_block`
+processes any size update instructions at the start of a block automatically.
+
 # Primitives
 
 Beyond the high-level API, alpacki exposes the individual HPACK primitives.
+If you are building on primitives instead of `encode_header_block` /
+`decode_header_block`, you are responsible for emitting dynamic table size
+updates yourself with `encode_table_size_update` when the maximum table size
+changes.
 
 Integer:
 ```gleam
