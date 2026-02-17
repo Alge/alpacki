@@ -744,8 +744,7 @@ fn do_match_dynamic(
 /// Resizes the dynamic table, typically in response to a SETTINGS frame.
 /// Evicts oldest entries if current size exceeds the new maximum. Records the
 /// pending resize so that encode_header_block automatically emits the required
-/// size update instructions at the start of the next header block
-/// (RFC 7541 Section 4.2).
+/// size update instructions at the start of the next header block.
 pub fn resize_dynamic(table: DynamicTable, new_max_size: Int) -> DynamicTable {
   let pending = case table.pending_resize {
     None -> new_max_size
@@ -926,13 +925,12 @@ pub fn lookup(
 /// Indexing mode for a header field, controlling how the encoder represents it
 /// on the wire and how the decoder preserves the original signal.
 pub type Indexing {
-  /// 6.2.1 — Store in the dynamic table for future reference.
+  /// 6.2.1; Store in the dynamic table for future reference.
   WithIndexing
-  /// 6.2.2 — Do not store. Useful for headers that change every request.
+  /// 6.2.2; Do not store. Useful for headers that change every request.
   WithoutIndexing
-  /// 6.2.3 — Do not store, and signal to intermediaries that this value is
-  /// sensitive and must never be compressed. Intermediaries MUST preserve this
-  /// representation (RFC 7541 Section 7.1.3).
+  /// 6.2.3; Do not store, and signal to intermediaries that this value is
+  /// sensitive and must never be compressed.
   NeverIndexed
 }
 
@@ -972,11 +970,10 @@ pub type HeaderField {
 /// +---+---+---+-------------------+
 /// ```
 ///
-/// Indexed representations (6.1) reference an existing table entry. Literal
-/// representations (6.2.x) carry the value on the wire, optionally referencing
-/// a table entry for the name. The decoder preserves each header's indexing
-/// mode in the returned HeaderField, allowing intermediaries to respect
-/// NeverIndexed signals (RFC 7541 Section 7.1.3).
+/// Indexed representations reference an existing table entry. Literal
+/// representations carry the value on the wire, optionally referencing a table
+/// entry for the name. The decoder preserves each header's indexing mode in
+/// the returned HeaderField.
 pub fn decode_header_block(
   data: BitArray,
   dynamic_table: DynamicTable,
@@ -1109,8 +1106,7 @@ fn validate_header_name(data: BitArray) -> Result(String, Nil)
 /// and value strings use Huffman encoding.
 ///
 /// If resize_dynamic was called since the last encoding, the required dynamic
-/// table size update instructions are prepended automatically
-/// (RFC 7541 Section 4.2).
+/// table size update instructions are prepended automatically.
 ///
 /// For more information, see Section 6:
 /// - https://datatracker.ietf.org/doc/html/rfc7541#section-6
@@ -1118,16 +1114,16 @@ fn validate_header_name(data: BitArray) -> Result(String, Nil)
 /// ---
 ///
 /// The encoder looks up each header in the static and dynamic tables and
-/// selects the most compact representation. A full match (both name and value
-/// found) always uses the indexed representation (6.1), regardless of the
-/// header's indexing mode — the entry is already visible to the decoder, so
-/// referencing it leaks no new information.
+/// selects the most compact representation. A full match always uses the 
+/// indexed representation, regardless of the header's indexing mode, as the
+/// entry is already visible to the decoder, so referencing it leaks no new 
+/// information.
 ///
 /// When only the name matches or nothing matches, the indexing mode selects
-/// the literal representation: WithIndexing uses incremental indexing (6.2.1)
-/// and adds the entry to the dynamic table. WithoutIndexing sends the value
-/// without storing it (6.2.2). NeverIndexed signals that intermediaries must
-/// never compress this value (6.2.3).
+/// the literal representation: `WithIndexing` uses incremental indexing and
+/// adds the entry to the dynamic table. `WithoutIndexing` sends the value
+/// without storing it. `NeverIndexed` signals that intermediaries must never
+/// compress this value.
 pub fn encode_header_block(
   headers: List(HeaderField),
   dynamic_table: DynamicTable,
@@ -1190,7 +1186,6 @@ fn encode_header_field(
   huffman: Bool,
 ) -> #(BitArray, DynamicTable) {
   case match(table, header.name, header.value), header.indexing {
-    // Full match; always use indexed representation (hpax approach).
     FullMatch(index), _ -> #(encode_indexed(index), table)
 
     // Name match + store; literal with incremental indexing.
@@ -1262,7 +1257,7 @@ fn encode_literal(
   <<index:bits, value:bits>>
 }
 
-// 6.2.x Literal Header Field with new name (index 0).
+// 6.2.x Literal Header Field with new name.
 fn encode_literal_new_name(
   name: String,
   value: String,
