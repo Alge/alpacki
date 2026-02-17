@@ -1,14 +1,14 @@
 //// <script>
 //// const docs = [
 ////   {
-////     header: "Headers",
+////     header: "Header Blocks",
 ////     functions: [
 ////       "decode_header_block",
 ////       "encode_header_block"
 ////     ]
 ////   },
 ////   {
-////     header: "Tables",
+////     header: "Index Address Space",
 ////     functions: [
 ////       "match",
 ////       "lookup"
@@ -132,45 +132,38 @@ pub type DecodeError {
   InvalidHuffmanEncoding
 }
 
-// Primitive Type Representations
+// Integer and String Representations (Section 5)
 // -----------------------------------------------------------------------------
 
-/// Decodes an integer used to represent name indexes, header field indexes,
-/// or string lengths. It accepts a BitArray starting at the byte containing the
-/// prefix, and the number of bits of the prefix. Returns either the decoded
-/// integer with the remaining BitArray data, or a decode error.
+/// Decodes an integer used to represent name indices, string lengths, or
+/// integer values. Accepts a BitArray starting at the byte containing the
+/// prefix and the number of prefix bits. Returns the decoded integer with the
+/// remaining BitArray, or a decode error.
 ///
-/// The prefix size is always between 1 and 8 bits. Passing another integer will
-/// cause a panic!
+/// The prefix size must be between 1 and 8 bits. Other values cause a panic.
 ///
-/// For more information, see Section 5.1:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.1
+/// See: [RFC 7541 Section 5.1](https://datatracker.ietf.org/doc/html/rfc7541#section-5.1)
 ///
 /// ---
 ///
 /// An integer is represented in two parts: a prefix that fills the current
-/// octet and an optional list of octets that are used if the integer value does
-/// not fit within the prefix.
+/// octet and an optional list of octets that are used if the integer value
+/// does not fit within the prefix.
 ///
-/// Example: integer value encoded within the prefix for N = 5:
 /// ```
 ///   0   1   2   3   4   5   6   7
 /// +---+---+---+---+---+---+---+---+
-/// | ? | ? | ? |       Value       |
+/// | ? | ? | ? |       Value       |  N = 5, value < 2^N-1
 /// +---+---+---+-------------------+
 /// ```
 ///
-/// If the integer is too big to be encoded within the N-bit prefix, all the
-/// bits of the prefix are set to 1, the value, decreased by 2^N-1, is encoded
-/// using a list of one or more octets, and the most significant bit of each
-/// octet is used as a continuation flag. The flag is set to 1 for all octets
-/// except the last one in the list.
+/// If the value is too large for the N-bit prefix, all prefix bits are set
+/// to 1 and the remainder is encoded using continuation bytes in base-128.
 ///
-/// Example: integer value encoded after the prefix for N = 5:
 /// ```
 ///   0   1   2   3   4   5   6   7
 /// +---+---+---+---+---+---+---+---+
-/// | ? | ? | ? | 1   1   1   1   1 |
+/// | ? | ? | ? | 1   1   1   1   1 |  N = 5, prefix exhausted
 /// +---+---+---+-------------------+
 /// | 1 |    Value-(2^N-1) LSB      |
 /// +---+---------------------------+
@@ -231,39 +224,34 @@ fn decode_integer_after_prefix(
   }
 }
 
-/// Encodes an integer used to represent name indexes, header field indexes,
-/// or string lengths. It accepts an integer to encode and the number of bits
-/// of the prefix (N). Returns the encoded BitArray.
+/// Encodes an integer used to represent name indices, string lengths, or
+/// integer values. Accepts an integer and the number of prefix bits (N).
+/// Returns the encoded BitArray.
 ///
-/// The prefix size is always between 1 and 8 bits. Passing another integer will
-/// cause a panic!
+/// The prefix size must be between 1 and 8 bits. Other values cause a panic.
 ///
-/// For more information, see Section 5.1:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.1
+/// See: [RFC 7541 Section 5.1](https://datatracker.ietf.org/doc/html/rfc7541#section-5.1)
 ///
 /// ---
 ///
 /// An integer is represented in two parts: a prefix that fills the current
-/// octet and an optional list of octets that are used if the integer value does
-/// not fit within the prefix.
+/// octet and an optional list of octets that are used if the integer value
+/// does not fit within the prefix.
 ///
 /// ```
 ///   0   1   2   3   4   5   6   7
 /// +---+---+---+---+---+---+---+---+
-/// | ? | ? | ? |       Value       | N = 5
+/// | ? | ? | ? |       Value       |  N = 5, value < 2^N-1
 /// +---+---+---+-------------------+
 /// ```
 ///
-/// If the integer is too big to be encoded within the N-bit prefix, all the
-/// bits of the prefix are set to 1, the value, decreased by 2^N-1, is encoded
-/// using a list of one or more octets, and the most significant bit of each
-/// octet is used as a continuation flag. The flag is set to 1 for all octets
-/// except the last one in the list.
+/// If the value is too large for the N-bit prefix, all prefix bits are set
+/// to 1 and the remainder is encoded using continuation bytes in base-128.
 ///
 /// ```
 ///   0   1   2   3   4   5   6   7
 /// +---+---+---+---+---+---+---+---+
-/// | ? | ? | ? | 1   1   1   1   1 | N = 5
+/// | ? | ? | ? | 1   1   1   1   1 |  N = 5, prefix exhausted
 /// +---+---+---+-------------------+
 /// | 1 |    Value-(2^N-1) LSB      |
 /// +---+---------------------------+
@@ -316,19 +304,18 @@ fn maximum_value_for_bits(n: Int) -> Int {
   }
 }
 
-/// Decodes a string literal used for header field names and values. Returns the
-/// decoded octets and the remaining BitArray, or a decode error.
+/// Decodes a string literal representation used for header field names and
+/// values. Returns the decoded octets and the remaining BitArray, or a
+/// decode error.
 ///
-/// For more information, see Section 5.2:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
+/// See: [RFC 7541 Section 5.2](https://datatracker.ietf.org/doc/html/rfc7541#section-5.2)
 ///
 /// ---
 ///
-/// String literals are opaque sequences of octets that can be encoded either
-/// directly or using Huffman encoding. Its representation contains one-bit
-/// flag, indicating whether or not the octets of the string are Huffman
-/// encoded, the number of octets used to encode the string literal, encoded as
-/// an integer with a 7-bit prefix, and encoded data of the string literal.
+/// A string literal is an opaque sequence of octets, encoded either directly
+/// or using Huffman coding. The representation starts with a one-bit flag (H)
+/// indicating Huffman encoding, followed by the string length as a 7-bit
+/// prefixed integer, then the encoded data.
 ///
 /// ```
 ///   0   1   2   3   4   5   6   7
@@ -356,19 +343,17 @@ pub fn decode_string_literal(
 }
 
 /// Encodes a string literal representation for header field names and values.
-/// Accepts the raw octets to encode and a flag indicating whether to use
-/// Huffman encoding. Returns the encoded BitArray.
+/// Accepts the raw octets and a flag indicating whether to use Huffman
+/// coding. Returns the encoded BitArray.
 ///
-/// For more information, see Section 5.2:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
+/// See: [RFC 7541 Section 5.2](https://datatracker.ietf.org/doc/html/rfc7541#section-5.2)
 ///
 /// ---
 ///
-/// String literals are opaque sequences of octets that can be encoded either
-/// directly or using Huffman encoding. Its representation contains one-bit
-/// flag, indicating whether or not the octets of the string are Huffman
-/// encoded, the number of octets used to encode the string literal, encoded as
-/// an integer with a 7-bit prefix, and encoded data of the string literal.
+/// A string literal is an opaque sequence of octets, encoded either directly
+/// or using Huffman coding. The representation starts with a one-bit flag (H)
+/// indicating Huffman encoding, followed by the string length as a 7-bit
+/// prefixed integer, then the encoded data.
 ///
 /// ```
 ///   0   1   2   3   4   5   6   7
@@ -390,36 +375,52 @@ pub fn encode_string_literal(data: BitArray, huffman huffman: Bool) -> BitArray 
   }
 }
 
-// Huffman
+/// Encodes a dynamic table size update instruction, signaling the decoder
+/// about a change in the maximum dynamic table size.
+///
+/// See: [RFC 7541 Section 6.3](https://datatracker.ietf.org/doc/html/rfc7541#section-6.3)
+///
+/// ---
+///
+/// ```
+///   0   1   2   3   4   5   6   7
+/// +---+---+---+---+---+---+---+---+
+/// | 0 | 0 | 1 |   Max size (5+)   |
+/// +---+---+---+-------------------+
+/// ```
+pub fn encode_table_size_update(new_size: Int) -> BitArray {
+  encode_prefixed_integer(new_size, 5, 0x20)
+}
+
+// Huffman Coding (Appendix B)
 // -----------------------------------------------------------------------------
 
-/// Decodes Huffman-encoded data according to RFC 7541 Appendix B.
+/// Decodes Huffman-coded data. Accepts Huffman-encoded bits and returns the
+/// decoded byte sequence. The input must be padded to an octet boundary with
+/// the most significant bits of the EOS symbol.
 ///
-/// Accepts Huffman-encoded bits and returns the decoded byte sequence. The
-/// input must be properly padded to an octet boundary with valid EOS padding.
-///
-/// For more information, see Section 5.2:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
+/// See: [RFC 7541 Appendix B](https://datatracker.ietf.org/doc/html/rfc7541#appendix-B)
 pub fn decode_huffman(data: BitArray) -> Result(BitArray, DecodeError) {
   huffman.decode(data, <<>>)
   |> result.replace_error(InvalidHuffmanEncoding)
 }
 
-/// Encodes data using Huffman encoding according to RFC 7541 Appendix B.
+/// Encodes data using Huffman coding. Accepts raw bytes and returns
+/// Huffman-encoded bits padded to an octet boundary with the most significant
+/// bits of the EOS symbol.
 ///
-/// Accepts raw bytes and returns Huffman-encoded bits with EOS padding to align
-/// to an octet boundary.
-///
-/// For more information, see Section 5.2:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-5.2
+/// See: [RFC 7541 Appendix B](https://datatracker.ietf.org/doc/html/rfc7541#appendix-B)
 pub fn encode_huffman(data: BitArray) -> BitArray {
   huffman.encode(data, <<>>)
 }
 
-// Static Table
+// Static Table (Appendix A)
 // -----------------------------------------------------------------------------
 
-/// Looks up a header by index from 1 to 61 in the static table.
+/// Looks up a header field by index 1 to 61 in the static table. Returns
+/// the name-value pair or an error if the index is out of range.
+///
+/// See: [RFC 7541 Appendix A](https://datatracker.ietf.org/doc/html/rfc7541#appendix-A)
 pub fn lookup_static(index: Int) -> Result(#(String, String), Nil) {
   case index {
     1 -> Ok(#(":authority", ""))
@@ -487,9 +488,11 @@ pub fn lookup_static(index: Int) -> Result(#(String, String), Nil) {
   }
 }
 
-/// Searches the static table for an entry matching the name and value. Returns
-/// FullMatch with index if both match, NameMatch with index if only name
-/// matches, or NoMatch.
+/// Searches the static table for an entry matching the given name and value.
+/// Returns `FullMatch` with index if both match, `NameMatch` with index if
+/// only the name matches, or `NoMatch`.
+///
+/// See: [RFC 7541 Appendix A](https://datatracker.ietf.org/doc/html/rfc7541#appendix-A)
 pub fn match_static(name: String, value: String) -> TableMatch {
   case name, value {
     ":authority", "" -> FullMatch(1)
@@ -609,15 +612,14 @@ pub fn match_static(name: String, value: String) -> TableMatch {
   }
 }
 
-// Dynamic Table
+// Dynamic Table (Section 4)
 // -----------------------------------------------------------------------------
 
-/// Dynamic table for HPACK compression. Stores recently used headers with
-/// indices starting at 62. The encoder and decoder each maintain their own
-/// table.
+/// Dynamic table for HPACK compression. Stores recently used header fields
+/// with indices starting at 62. The encoder and decoder each maintain their
+/// own table.
 ///
-/// See RFC 7541 Section 2.3:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-2.3
+/// See: [RFC 7541 Section 2.3.2](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.2)
 pub opaque type DynamicTable {
   DynamicTable(
     entries: List(#(String, String)),
@@ -634,30 +636,39 @@ const dynamic_table_start = 62
 // Entry overhead as defined in RFC 7541 Section 4.1.
 const entry_overhead = 32
 
-/// Returns the current size of the dynamic table in bytes.
+/// Returns the current size of the dynamic table in bytes, calculated as
+/// the sum of each entry's name length, value length, and 32-byte overhead.
+/// ([RFC 7541 Section 4.1](https://datatracker.ietf.org/doc/html/rfc7541#section-4.1))
 pub fn dynamic_size(table: DynamicTable) -> Int {
   table.size
 }
 
 /// Returns the maximum size of the dynamic table in bytes.
+/// ([RFC 7541 Section 4.2](https://datatracker.ietf.org/doc/html/rfc7541#section-4.2))
 pub fn dynamic_max_size(table: DynamicTable) -> Int {
   table.max_size
 }
 
 /// Returns the number of entries in the dynamic table.
+/// ([RFC 7541 Section 2.3.2](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.2))
 pub fn dynamic_length(table: DynamicTable) -> Int {
   table.length
 }
 
 /// Creates an empty dynamic table with the specified maximum size in bytes.
-/// Default maximum size per RFC 7541 is 4096 bytes.
+/// The protocol determines the initial maximum size; HTTP/2 defaults to
+/// 4096 bytes via `SETTINGS_HEADER_TABLE_SIZE`.
+///
+/// See: [RFC 7541 Section 4.2](https://datatracker.ietf.org/doc/html/rfc7541#section-4.2)
 pub fn new_dynamic(max_size: Int) -> DynamicTable {
   DynamicTable(entries: [], size: 0, max_size:, length: 0, pending_resize: None)
 }
 
 /// Adds an entry to the dynamic table at index 62. Evicts oldest entries if
-/// the new entry would exceed maximum size. Clears the table without adding if
-/// the entry alone exceeds maximum size. See RFC 7541 Section 4.4.
+/// the new entry would exceed maximum size. Clears the table without adding
+/// if the entry alone exceeds maximum size.
+///
+/// See: [RFC 7541 Section 4.4](https://datatracker.ietf.org/doc/html/rfc7541#section-4.4)
 pub fn add_dynamic(
   table: DynamicTable,
   name: String,
@@ -679,8 +690,11 @@ pub fn add_dynamic(
   }
 }
 
-/// Looks up an entry by index in the dynamic table. Returns the name-value
-/// pair or an error if the index is invalid.
+/// Looks up a header field by index in the dynamic table. Indices start at
+/// 62 for the most recently added entry. Returns the name-value pair or an
+/// error if the index is out of range.
+///
+/// See: [RFC 7541 Section 2.3.3](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.3)
 pub fn lookup_dynamic(
   table: DynamicTable,
   index: Int,
@@ -697,9 +711,11 @@ pub fn lookup_dynamic(
   }
 }
 
-/// Searches the dynamic table for an entry matching the name and value. Returns
-/// FullMatch with index if both match, NameMatch with index if only name
-/// matches, or NoMatch.
+/// Searches the dynamic table for an entry matching the given name and value.
+/// Returns `FullMatch` with index if both match, `NameMatch` with index if
+/// only the name matches, or `NoMatch`.
+///
+/// See: [RFC 7541 Section 2.3.2](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.2)
 pub fn match_dynamic(
   table: DynamicTable,
   name: String,
@@ -742,9 +758,11 @@ fn do_match_dynamic(
 }
 
 /// Resizes the dynamic table, typically in response to a SETTINGS frame.
-/// Evicts oldest entries if current size exceeds the new maximum. Records the
-/// pending resize so that encode_header_block automatically emits the required
-/// size update instructions at the start of the next header block.
+/// Evicts oldest entries if the current size exceeds the new maximum. Records
+/// the pending resize so that `encode_header_block` automatically emits the
+/// required size update instructions at the start of the next header block.
+///
+/// See: [RFC 7541 Section 4.2](https://datatracker.ietf.org/doc/html/rfc7541#section-4.2)
 pub fn resize_dynamic(table: DynamicTable, new_max_size: Int) -> DynamicTable {
   let pending = case table.pending_resize {
     None -> new_max_size
@@ -757,7 +775,8 @@ pub fn resize_dynamic(table: DynamicTable, new_max_size: Int) -> DynamicTable {
   )
 }
 
-/// Removes all entries from the dynamic table while preserving maximum size.
+/// Removes all entries from the dynamic table while preserving the maximum
+/// size setting.
 pub fn clear_dynamic(table: DynamicTable) -> DynamicTable {
   DynamicTable(..table, entries: [], size: 0, length: 0)
 }
@@ -865,12 +884,14 @@ fn calculate_entry_size(name: String, value: String) -> Int {
   string.byte_size(name) + string.byte_size(value) + entry_overhead
 }
 
-// Tables
+// Index Address Space (Section 2.3.3)
 // -----------------------------------------------------------------------------
 
-/// Result of searching a table for a header name-value pair. The index refers
-/// to the table's address space: 1–61 for static entries, 62 and above for
-/// dynamic entries.
+/// Result of searching a table for a header field. The index refers to the
+/// combined address space: 1–61 for static entries, 62 and above for dynamic
+/// entries.
+///
+/// See: [RFC 7541 Section 2.3.3](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.3)
 pub type TableMatch {
   /// Both name and value matched an entry at the given index.
   FullMatch(index: Int)
@@ -881,13 +902,15 @@ pub type TableMatch {
 }
 
 /// Searches the static and dynamic tables for the best match for a header
-/// name-value pair. Checks the static table first, then the dynamic table,
-/// and returns the most useful match found.
+/// field. Checks the static table first, then the dynamic table, and returns
+/// the most useful match found.
 ///
 /// A full match in the static table wins immediately. When the static table
 /// has only a name match, the dynamic table is still checked for a full
 /// match. A static name match is preferred over a dynamic name match. When
-/// the static table has no match, the dynamic table is searched alone.
+/// the static table has no match, the dynamic table result is returned.
+///
+/// See: [RFC 7541 Section 2.3.3](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.3)
 pub fn match(
   dynamic_table: DynamicTable,
   name: String,
@@ -905,10 +928,12 @@ pub fn match(
   }
 }
 
-/// Looks up a header by index across the static and dynamic tables. Indices
-/// 1 to 61 address the static table, and indices 62 and above address the
+/// Looks up a header field by index across the static and dynamic tables.
+/// Indices 1 to 61 address the static table; 62 and above address the
 /// dynamic table starting from the most recently added entry. Returns the
 /// name-value pair or an error if the index is out of range.
+///
+/// See: [RFC 7541 Section 2.3.3](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.3)
 pub fn lookup(
   dynamic_table: DynamicTable,
   index: Int,
@@ -919,24 +944,28 @@ pub fn lookup(
   }
 }
 
-// Headers
+// Binary Format (Section 6)
 // -----------------------------------------------------------------------------
 
 /// Indexing mode for a header field, controlling how the encoder represents it
 /// on the wire and how the decoder preserves the original signal.
+///
+/// See: [RFC 7541 Section 6.2](https://datatracker.ietf.org/doc/html/rfc7541#section-6.2)
 pub type Indexing {
-  /// 6.2.1; Store in the dynamic table for future reference.
+  /// Literal with incremental indexing (Section 6.2.1). Store in the dynamic
+  /// table for future reference.
   WithIndexing
-  /// 6.2.2; Do not store. Useful for headers that change every request.
+  /// Literal without indexing (Section 6.2.2). Do not store. Useful for
+  /// header fields that change every request.
   WithoutIndexing
-  /// 6.2.3; Do not store, and signal to intermediaries that this value is
-  /// sensitive and must never be compressed.
+  /// Literal never indexed (Section 6.2.3). Do not store, and signal to
+  /// intermediaries that this value is sensitive and must never be compressed.
   NeverIndexed
 }
 
 /// A header field as it flows through the encoder and decoder. When encoding,
-/// the indexing mode controls the wire representation. When decoding, it
-/// preserves the representation used by the sender.
+/// the `indexing` mode controls the wire representation. When decoding, it
+/// preserves the representation chosen by the sender.
 pub type HeaderField {
   HeaderField(name: String, value: String, indexing: Indexing)
 }
@@ -947,8 +976,7 @@ pub type HeaderField {
 /// Any dynamic table size update instructions at the start of the block are
 /// processed automatically before header fields are decoded.
 ///
-/// For more information, see Section 6:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-6
+/// See: [RFC 7541 Section 6](https://datatracker.ietf.org/doc/html/rfc7541#section-6)
 ///
 /// ---
 ///
@@ -960,20 +988,20 @@ pub type HeaderField {
 /// +---+---+---+---+---+---+---+---+
 /// | 1 |        Index (7+)         | 6.1 Indexed
 /// +---+---------------------------+
-/// | 0 | 1 |      Index (6+)       | 6.2.1 Literal, With Indexing
+/// | 0 | 1 |      Index (6+)       | 6.2.1 With Indexing
 /// +---+---+-----------------------+
-/// | 0 | 0 | 0 | 0 |  Index (4+)   | 6.2.2 Literal, Without Indexing
+/// | 0 | 0 | 0 | 0 |  Index (4+)   | 6.2.2 Without Indexing
 /// +---+---+---+---+---------------+
-/// | 0 | 0 | 0 | 1 |  Index (4+)   | 6.2.3 Literal, Never Indexed
+/// | 0 | 0 | 0 | 1 |  Index (4+)   | 6.2.3 Never Indexed
 /// +---+---+---+---+---------------+
-/// | 0 | 0 | 1 |   Max size (5+)   | 6.3 Dynamic Table Size Update
+/// | 0 | 0 | 1 |   Max size (5+)   | 6.3 Size Update
 /// +---+---+---+-------------------+
 /// ```
 ///
 /// Indexed representations reference an existing table entry. Literal
-/// representations carry the value on the wire, optionally referencing a table
-/// entry for the name. The decoder preserves each header's indexing mode in
-/// the returned HeaderField.
+/// representations carry the value on the wire, optionally referencing a
+/// table entry for the name. The decoder preserves each header field's
+/// indexing mode in the returned `HeaderField`.
 pub fn decode_header_block(
   data: BitArray,
   dynamic_table: DynamicTable,
@@ -1101,29 +1129,27 @@ fn decode_literal(
 fn validate_header_name(data: BitArray) -> Result(String, Nil)
 
 /// Encodes a list of header fields into a header block fragment, updating the
-/// dynamic table as headers are added. Returns the encoded block as a
-/// BytesTree and the updated dynamic table. When huffman is True, all name
-/// and value strings use Huffman encoding.
+/// dynamic table as entries are added. Returns the encoded block as a
+/// `BytesTree` and the updated dynamic table. When `huffman` is `True`, all
+/// name and value strings use Huffman coding.
 ///
-/// If resize_dynamic was called since the last encoding, the required dynamic
-/// table size update instructions are prepended automatically.
+/// If `resize_dynamic` was called since the last encoding, the required
+/// dynamic table size update instructions are prepended automatically.
 ///
-/// For more information, see Section 6:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-6
+/// See: [RFC 7541 Section 6](https://datatracker.ietf.org/doc/html/rfc7541#section-6)
 ///
 /// ---
 ///
-/// The encoder looks up each header in the static and dynamic tables and
-/// selects the most compact representation. A full match always uses the 
-/// indexed representation, regardless of the header's indexing mode, as the
-/// entry is already visible to the decoder, so referencing it leaks no new 
-/// information.
+/// The encoder looks up each header field in the static and dynamic tables
+/// and selects the most compact representation. A full match always uses the
+/// indexed representation regardless of the indexing mode, as the entry is
+/// already visible to the decoder as referencing it leaks no new information.
 ///
 /// When only the name matches or nothing matches, the indexing mode selects
 /// the literal representation: `WithIndexing` uses incremental indexing and
-/// adds the entry to the dynamic table. `WithoutIndexing` sends the value
-/// without storing it. `NeverIndexed` signals that intermediaries must never
-/// compress this value.
+/// adds the entry to the dynamic table, `WithoutIndexing` sends the value
+/// without storing it, and `NeverIndexed` signals that intermediaries must
+/// never compress this value.
 pub fn encode_header_block(
   headers: List(HeaderField),
   dynamic_table: DynamicTable,
@@ -1269,22 +1295,4 @@ fn encode_literal_new_name(
   let name = encode_string_literal(<<name:utf8>>, huffman:)
   let value = encode_string_literal(<<value:utf8>>, huffman:)
   <<index:bits, name:bits, value:bits>>
-}
-
-/// Encodes a dynamic table size update instruction. Used to signal the decoder
-/// about a change in the maximum dynamic table size.
-///
-/// For more information, see Section 6.3:
-/// - https://datatracker.ietf.org/doc/html/rfc7541#section-6.3
-///
-/// ---
-///
-/// ```
-///   0   1   2   3   4   5   6   7
-/// +---+---+---+---+---+---+---+---+
-/// | 0 | 0 | 1 |   Max size (5+)   |
-/// +---+---+---+-------------------+
-/// ```
-pub fn encode_table_size_update(new_size: Int) -> BitArray {
-  encode_prefixed_integer(new_size, 5, 0x20)
 }
