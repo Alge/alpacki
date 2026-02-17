@@ -18,7 +18,6 @@ on the receiving side.
 
 Encoding from a list of headers:
 ```gleam
-// Encoding from a list of headers.
 let table = alpacki.new_dynamic(4096)
 let headers = [
   alpacki.HeaderField(":method", "GET", alpacki.WithIndexing),
