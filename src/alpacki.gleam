@@ -124,8 +124,6 @@ pub type DecodeError {
   InvalidEncoding
   /// A header field referenced a table index that does not exist.
   InvalidTableIndex
-  /// A literal header name contained bytes outside the allowed range.
-  InvalidHeaderName
   /// A header value contained bytes that are not valid UTF-8.
   InvalidHeaderValue
   /// Huffman-encoded data was malformed or had invalid padding.
@@ -421,69 +419,69 @@ pub fn encode_huffman(data: BitArray) -> BitArray {
 /// the name-value pair or an error if the index is out of range.
 ///
 /// See: [RFC 7541 Appendix A](https://datatracker.ietf.org/doc/html/rfc7541#appendix-A)
-pub fn lookup_static(index: Int) -> Result(#(String, String), Nil) {
+pub fn lookup_static(index: Int) -> Result(#(BitArray, String), Nil) {
   case index {
-    1 -> Ok(#(":authority", ""))
-    2 -> Ok(#(":method", "GET"))
-    3 -> Ok(#(":method", "POST"))
-    4 -> Ok(#(":path", "/"))
-    5 -> Ok(#(":path", "/index.html"))
-    6 -> Ok(#(":scheme", "http"))
-    7 -> Ok(#(":scheme", "https"))
-    8 -> Ok(#(":status", "200"))
-    9 -> Ok(#(":status", "204"))
-    10 -> Ok(#(":status", "206"))
-    11 -> Ok(#(":status", "304"))
-    12 -> Ok(#(":status", "400"))
-    13 -> Ok(#(":status", "404"))
-    14 -> Ok(#(":status", "500"))
-    15 -> Ok(#("accept-charset", ""))
-    16 -> Ok(#("accept-encoding", "gzip, deflate"))
-    17 -> Ok(#("accept-language", ""))
-    18 -> Ok(#("accept-ranges", ""))
-    19 -> Ok(#("accept", ""))
-    20 -> Ok(#("access-control-allow-origin", ""))
-    21 -> Ok(#("age", ""))
-    22 -> Ok(#("allow", ""))
-    23 -> Ok(#("authorization", ""))
-    24 -> Ok(#("cache-control", ""))
-    25 -> Ok(#("content-disposition", ""))
-    26 -> Ok(#("content-encoding", ""))
-    27 -> Ok(#("content-language", ""))
-    28 -> Ok(#("content-length", ""))
-    29 -> Ok(#("content-location", ""))
-    30 -> Ok(#("content-range", ""))
-    31 -> Ok(#("content-type", ""))
-    32 -> Ok(#("cookie", ""))
-    33 -> Ok(#("date", ""))
-    34 -> Ok(#("etag", ""))
-    35 -> Ok(#("expect", ""))
-    36 -> Ok(#("expires", ""))
-    37 -> Ok(#("from", ""))
-    38 -> Ok(#("host", ""))
-    39 -> Ok(#("if-match", ""))
-    40 -> Ok(#("if-modified-since", ""))
-    41 -> Ok(#("if-none-match", ""))
-    42 -> Ok(#("if-range", ""))
-    43 -> Ok(#("if-unmodified-since", ""))
-    44 -> Ok(#("last-modified", ""))
-    45 -> Ok(#("link", ""))
-    46 -> Ok(#("location", ""))
-    47 -> Ok(#("max-forwards", ""))
-    48 -> Ok(#("proxy-authenticate", ""))
-    49 -> Ok(#("proxy-authorization", ""))
-    50 -> Ok(#("range", ""))
-    51 -> Ok(#("referer", ""))
-    52 -> Ok(#("refresh", ""))
-    53 -> Ok(#("retry-after", ""))
-    54 -> Ok(#("server", ""))
-    55 -> Ok(#("set-cookie", ""))
-    56 -> Ok(#("strict-transport-security", ""))
-    57 -> Ok(#("transfer-encoding", ""))
-    58 -> Ok(#("user-agent", ""))
-    59 -> Ok(#("vary", ""))
-    60 -> Ok(#("via", ""))
-    61 -> Ok(#("www-authenticate", ""))
+    1 -> Ok(#(<<":authority":utf8>>, ""))
+    2 -> Ok(#(<<":method":utf8>>, "GET"))
+    3 -> Ok(#(<<":method":utf8>>, "POST"))
+    4 -> Ok(#(<<":path":utf8>>, "/"))
+    5 -> Ok(#(<<":path":utf8>>, "/index.html"))
+    6 -> Ok(#(<<":scheme":utf8>>, "http"))
+    7 -> Ok(#(<<":scheme":utf8>>, "https"))
+    8 -> Ok(#(<<":status":utf8>>, "200"))
+    9 -> Ok(#(<<":status":utf8>>, "204"))
+    10 -> Ok(#(<<":status":utf8>>, "206"))
+    11 -> Ok(#(<<":status":utf8>>, "304"))
+    12 -> Ok(#(<<":status":utf8>>, "400"))
+    13 -> Ok(#(<<":status":utf8>>, "404"))
+    14 -> Ok(#(<<":status":utf8>>, "500"))
+    15 -> Ok(#(<<"accept-charset":utf8>>, ""))
+    16 -> Ok(#(<<"accept-encoding":utf8>>, "gzip, deflate"))
+    17 -> Ok(#(<<"accept-language":utf8>>, ""))
+    18 -> Ok(#(<<"accept-ranges":utf8>>, ""))
+    19 -> Ok(#(<<"accept":utf8>>, ""))
+    20 -> Ok(#(<<"access-control-allow-origin":utf8>>, ""))
+    21 -> Ok(#(<<"age":utf8>>, ""))
+    22 -> Ok(#(<<"allow":utf8>>, ""))
+    23 -> Ok(#(<<"authorization":utf8>>, ""))
+    24 -> Ok(#(<<"cache-control":utf8>>, ""))
+    25 -> Ok(#(<<"content-disposition":utf8>>, ""))
+    26 -> Ok(#(<<"content-encoding":utf8>>, ""))
+    27 -> Ok(#(<<"content-language":utf8>>, ""))
+    28 -> Ok(#(<<"content-length":utf8>>, ""))
+    29 -> Ok(#(<<"content-location":utf8>>, ""))
+    30 -> Ok(#(<<"content-range":utf8>>, ""))
+    31 -> Ok(#(<<"content-type":utf8>>, ""))
+    32 -> Ok(#(<<"cookie":utf8>>, ""))
+    33 -> Ok(#(<<"date":utf8>>, ""))
+    34 -> Ok(#(<<"etag":utf8>>, ""))
+    35 -> Ok(#(<<"expect":utf8>>, ""))
+    36 -> Ok(#(<<"expires":utf8>>, ""))
+    37 -> Ok(#(<<"from":utf8>>, ""))
+    38 -> Ok(#(<<"host":utf8>>, ""))
+    39 -> Ok(#(<<"if-match":utf8>>, ""))
+    40 -> Ok(#(<<"if-modified-since":utf8>>, ""))
+    41 -> Ok(#(<<"if-none-match":utf8>>, ""))
+    42 -> Ok(#(<<"if-range":utf8>>, ""))
+    43 -> Ok(#(<<"if-unmodified-since":utf8>>, ""))
+    44 -> Ok(#(<<"last-modified":utf8>>, ""))
+    45 -> Ok(#(<<"link":utf8>>, ""))
+    46 -> Ok(#(<<"location":utf8>>, ""))
+    47 -> Ok(#(<<"max-forwards":utf8>>, ""))
+    48 -> Ok(#(<<"proxy-authenticate":utf8>>, ""))
+    49 -> Ok(#(<<"proxy-authorization":utf8>>, ""))
+    50 -> Ok(#(<<"range":utf8>>, ""))
+    51 -> Ok(#(<<"referer":utf8>>, ""))
+    52 -> Ok(#(<<"refresh":utf8>>, ""))
+    53 -> Ok(#(<<"retry-after":utf8>>, ""))
+    54 -> Ok(#(<<"server":utf8>>, ""))
+    55 -> Ok(#(<<"set-cookie":utf8>>, ""))
+    56 -> Ok(#(<<"strict-transport-security":utf8>>, ""))
+    57 -> Ok(#(<<"transfer-encoding":utf8>>, ""))
+    58 -> Ok(#(<<"user-agent":utf8>>, ""))
+    59 -> Ok(#(<<"vary":utf8>>, ""))
+    60 -> Ok(#(<<"via":utf8>>, ""))
+    61 -> Ok(#(<<"www-authenticate":utf8>>, ""))
     _ -> Error(Nil)
   }
 }
@@ -493,121 +491,121 @@ pub fn lookup_static(index: Int) -> Result(#(String, String), Nil) {
 /// only the name matches, or `NoMatch`.
 ///
 /// See: [RFC 7541 Appendix A](https://datatracker.ietf.org/doc/html/rfc7541#appendix-A)
-pub fn match_static(name: String, value: String) -> TableMatch {
+pub fn match_static(name: BitArray, value: String) -> TableMatch {
   case name, value {
-    ":authority", "" -> FullMatch(1)
-    ":method", "GET" -> FullMatch(2)
-    ":method", "POST" -> FullMatch(3)
-    ":path", "/" -> FullMatch(4)
-    ":path", "/index.html" -> FullMatch(5)
-    ":scheme", "http" -> FullMatch(6)
-    ":scheme", "https" -> FullMatch(7)
-    ":status", "200" -> FullMatch(8)
-    ":status", "204" -> FullMatch(9)
-    ":status", "206" -> FullMatch(10)
-    ":status", "304" -> FullMatch(11)
-    ":status", "400" -> FullMatch(12)
-    ":status", "404" -> FullMatch(13)
-    ":status", "500" -> FullMatch(14)
-    "accept-charset", "" -> FullMatch(15)
-    "accept-encoding", "gzip, deflate" -> FullMatch(16)
-    "accept-language", "" -> FullMatch(17)
-    "accept-ranges", "" -> FullMatch(18)
-    "accept", "" -> FullMatch(19)
-    "access-control-allow-origin", "" -> FullMatch(20)
-    "age", "" -> FullMatch(21)
-    "allow", "" -> FullMatch(22)
-    "authorization", "" -> FullMatch(23)
-    "cache-control", "" -> FullMatch(24)
-    "content-disposition", "" -> FullMatch(25)
-    "content-encoding", "" -> FullMatch(26)
-    "content-language", "" -> FullMatch(27)
-    "content-length", "" -> FullMatch(28)
-    "content-location", "" -> FullMatch(29)
-    "content-range", "" -> FullMatch(30)
-    "content-type", "" -> FullMatch(31)
-    "cookie", "" -> FullMatch(32)
-    "date", "" -> FullMatch(33)
-    "etag", "" -> FullMatch(34)
-    "expect", "" -> FullMatch(35)
-    "expires", "" -> FullMatch(36)
-    "from", "" -> FullMatch(37)
-    "host", "" -> FullMatch(38)
-    "if-match", "" -> FullMatch(39)
-    "if-modified-since", "" -> FullMatch(40)
-    "if-none-match", "" -> FullMatch(41)
-    "if-range", "" -> FullMatch(42)
-    "if-unmodified-since", "" -> FullMatch(43)
-    "last-modified", "" -> FullMatch(44)
-    "link", "" -> FullMatch(45)
-    "location", "" -> FullMatch(46)
-    "max-forwards", "" -> FullMatch(47)
-    "proxy-authenticate", "" -> FullMatch(48)
-    "proxy-authorization", "" -> FullMatch(49)
-    "range", "" -> FullMatch(50)
-    "referer", "" -> FullMatch(51)
-    "refresh", "" -> FullMatch(52)
-    "retry-after", "" -> FullMatch(53)
-    "server", "" -> FullMatch(54)
-    "set-cookie", "" -> FullMatch(55)
-    "strict-transport-security", "" -> FullMatch(56)
-    "transfer-encoding", "" -> FullMatch(57)
-    "user-agent", "" -> FullMatch(58)
-    "vary", "" -> FullMatch(59)
-    "via", "" -> FullMatch(60)
-    "www-authenticate", "" -> FullMatch(61)
-    ":authority", _ -> NameMatch(1)
-    ":method", _ -> NameMatch(2)
-    ":path", _ -> NameMatch(4)
-    ":scheme", _ -> NameMatch(6)
-    ":status", _ -> NameMatch(8)
-    "accept-charset", _ -> NameMatch(15)
-    "accept-encoding", _ -> NameMatch(16)
-    "accept-language", _ -> NameMatch(17)
-    "accept-ranges", _ -> NameMatch(18)
-    "accept", _ -> NameMatch(19)
-    "access-control-allow-origin", _ -> NameMatch(20)
-    "age", _ -> NameMatch(21)
-    "allow", _ -> NameMatch(22)
-    "authorization", _ -> NameMatch(23)
-    "cache-control", _ -> NameMatch(24)
-    "content-disposition", _ -> NameMatch(25)
-    "content-encoding", _ -> NameMatch(26)
-    "content-language", _ -> NameMatch(27)
-    "content-length", _ -> NameMatch(28)
-    "content-location", _ -> NameMatch(29)
-    "content-range", _ -> NameMatch(30)
-    "content-type", _ -> NameMatch(31)
-    "cookie", _ -> NameMatch(32)
-    "date", _ -> NameMatch(33)
-    "etag", _ -> NameMatch(34)
-    "expect", _ -> NameMatch(35)
-    "expires", _ -> NameMatch(36)
-    "from", _ -> NameMatch(37)
-    "host", _ -> NameMatch(38)
-    "if-match", _ -> NameMatch(39)
-    "if-modified-since", _ -> NameMatch(40)
-    "if-none-match", _ -> NameMatch(41)
-    "if-range", _ -> NameMatch(42)
-    "if-unmodified-since", _ -> NameMatch(43)
-    "last-modified", _ -> NameMatch(44)
-    "link", _ -> NameMatch(45)
-    "location", _ -> NameMatch(46)
-    "max-forwards", _ -> NameMatch(47)
-    "proxy-authenticate", _ -> NameMatch(48)
-    "proxy-authorization", _ -> NameMatch(49)
-    "range", _ -> NameMatch(50)
-    "referer", _ -> NameMatch(51)
-    "refresh", _ -> NameMatch(52)
-    "retry-after", _ -> NameMatch(53)
-    "server", _ -> NameMatch(54)
-    "set-cookie", _ -> NameMatch(55)
-    "strict-transport-security", _ -> NameMatch(56)
-    "transfer-encoding", _ -> NameMatch(57)
-    "user-agent", _ -> NameMatch(58)
-    "vary", _ -> NameMatch(59)
-    "via", _ -> NameMatch(60)
-    "www-authenticate", _ -> NameMatch(61)
+    <<":authority":utf8>>, "" -> FullMatch(1)
+    <<":method":utf8>>, "GET" -> FullMatch(2)
+    <<":method":utf8>>, "POST" -> FullMatch(3)
+    <<":path":utf8>>, "/" -> FullMatch(4)
+    <<":path":utf8>>, "/index.html" -> FullMatch(5)
+    <<":scheme":utf8>>, "http" -> FullMatch(6)
+    <<":scheme":utf8>>, "https" -> FullMatch(7)
+    <<":status":utf8>>, "200" -> FullMatch(8)
+    <<":status":utf8>>, "204" -> FullMatch(9)
+    <<":status":utf8>>, "206" -> FullMatch(10)
+    <<":status":utf8>>, "304" -> FullMatch(11)
+    <<":status":utf8>>, "400" -> FullMatch(12)
+    <<":status":utf8>>, "404" -> FullMatch(13)
+    <<":status":utf8>>, "500" -> FullMatch(14)
+    <<"accept-charset":utf8>>, "" -> FullMatch(15)
+    <<"accept-encoding":utf8>>, "gzip, deflate" -> FullMatch(16)
+    <<"accept-language":utf8>>, "" -> FullMatch(17)
+    <<"accept-ranges":utf8>>, "" -> FullMatch(18)
+    <<"accept":utf8>>, "" -> FullMatch(19)
+    <<"access-control-allow-origin":utf8>>, "" -> FullMatch(20)
+    <<"age":utf8>>, "" -> FullMatch(21)
+    <<"allow":utf8>>, "" -> FullMatch(22)
+    <<"authorization":utf8>>, "" -> FullMatch(23)
+    <<"cache-control":utf8>>, "" -> FullMatch(24)
+    <<"content-disposition":utf8>>, "" -> FullMatch(25)
+    <<"content-encoding":utf8>>, "" -> FullMatch(26)
+    <<"content-language":utf8>>, "" -> FullMatch(27)
+    <<"content-length":utf8>>, "" -> FullMatch(28)
+    <<"content-location":utf8>>, "" -> FullMatch(29)
+    <<"content-range":utf8>>, "" -> FullMatch(30)
+    <<"content-type":utf8>>, "" -> FullMatch(31)
+    <<"cookie":utf8>>, "" -> FullMatch(32)
+    <<"date":utf8>>, "" -> FullMatch(33)
+    <<"etag":utf8>>, "" -> FullMatch(34)
+    <<"expect":utf8>>, "" -> FullMatch(35)
+    <<"expires":utf8>>, "" -> FullMatch(36)
+    <<"from":utf8>>, "" -> FullMatch(37)
+    <<"host":utf8>>, "" -> FullMatch(38)
+    <<"if-match":utf8>>, "" -> FullMatch(39)
+    <<"if-modified-since":utf8>>, "" -> FullMatch(40)
+    <<"if-none-match":utf8>>, "" -> FullMatch(41)
+    <<"if-range":utf8>>, "" -> FullMatch(42)
+    <<"if-unmodified-since":utf8>>, "" -> FullMatch(43)
+    <<"last-modified":utf8>>, "" -> FullMatch(44)
+    <<"link":utf8>>, "" -> FullMatch(45)
+    <<"location":utf8>>, "" -> FullMatch(46)
+    <<"max-forwards":utf8>>, "" -> FullMatch(47)
+    <<"proxy-authenticate":utf8>>, "" -> FullMatch(48)
+    <<"proxy-authorization":utf8>>, "" -> FullMatch(49)
+    <<"range":utf8>>, "" -> FullMatch(50)
+    <<"referer":utf8>>, "" -> FullMatch(51)
+    <<"refresh":utf8>>, "" -> FullMatch(52)
+    <<"retry-after":utf8>>, "" -> FullMatch(53)
+    <<"server":utf8>>, "" -> FullMatch(54)
+    <<"set-cookie":utf8>>, "" -> FullMatch(55)
+    <<"strict-transport-security":utf8>>, "" -> FullMatch(56)
+    <<"transfer-encoding":utf8>>, "" -> FullMatch(57)
+    <<"user-agent":utf8>>, "" -> FullMatch(58)
+    <<"vary":utf8>>, "" -> FullMatch(59)
+    <<"via":utf8>>, "" -> FullMatch(60)
+    <<"www-authenticate":utf8>>, "" -> FullMatch(61)
+    <<":authority":utf8>>, _ -> NameMatch(1)
+    <<":method":utf8>>, _ -> NameMatch(2)
+    <<":path":utf8>>, _ -> NameMatch(4)
+    <<":scheme":utf8>>, _ -> NameMatch(6)
+    <<":status":utf8>>, _ -> NameMatch(8)
+    <<"accept-charset":utf8>>, _ -> NameMatch(15)
+    <<"accept-encoding":utf8>>, _ -> NameMatch(16)
+    <<"accept-language":utf8>>, _ -> NameMatch(17)
+    <<"accept-ranges":utf8>>, _ -> NameMatch(18)
+    <<"accept":utf8>>, _ -> NameMatch(19)
+    <<"access-control-allow-origin":utf8>>, _ -> NameMatch(20)
+    <<"age":utf8>>, _ -> NameMatch(21)
+    <<"allow":utf8>>, _ -> NameMatch(22)
+    <<"authorization":utf8>>, _ -> NameMatch(23)
+    <<"cache-control":utf8>>, _ -> NameMatch(24)
+    <<"content-disposition":utf8>>, _ -> NameMatch(25)
+    <<"content-encoding":utf8>>, _ -> NameMatch(26)
+    <<"content-language":utf8>>, _ -> NameMatch(27)
+    <<"content-length":utf8>>, _ -> NameMatch(28)
+    <<"content-location":utf8>>, _ -> NameMatch(29)
+    <<"content-range":utf8>>, _ -> NameMatch(30)
+    <<"content-type":utf8>>, _ -> NameMatch(31)
+    <<"cookie":utf8>>, _ -> NameMatch(32)
+    <<"date":utf8>>, _ -> NameMatch(33)
+    <<"etag":utf8>>, _ -> NameMatch(34)
+    <<"expect":utf8>>, _ -> NameMatch(35)
+    <<"expires":utf8>>, _ -> NameMatch(36)
+    <<"from":utf8>>, _ -> NameMatch(37)
+    <<"host":utf8>>, _ -> NameMatch(38)
+    <<"if-match":utf8>>, _ -> NameMatch(39)
+    <<"if-modified-since":utf8>>, _ -> NameMatch(40)
+    <<"if-none-match":utf8>>, _ -> NameMatch(41)
+    <<"if-range":utf8>>, _ -> NameMatch(42)
+    <<"if-unmodified-since":utf8>>, _ -> NameMatch(43)
+    <<"last-modified":utf8>>, _ -> NameMatch(44)
+    <<"link":utf8>>, _ -> NameMatch(45)
+    <<"location":utf8>>, _ -> NameMatch(46)
+    <<"max-forwards":utf8>>, _ -> NameMatch(47)
+    <<"proxy-authenticate":utf8>>, _ -> NameMatch(48)
+    <<"proxy-authorization":utf8>>, _ -> NameMatch(49)
+    <<"range":utf8>>, _ -> NameMatch(50)
+    <<"referer":utf8>>, _ -> NameMatch(51)
+    <<"refresh":utf8>>, _ -> NameMatch(52)
+    <<"retry-after":utf8>>, _ -> NameMatch(53)
+    <<"server":utf8>>, _ -> NameMatch(54)
+    <<"set-cookie":utf8>>, _ -> NameMatch(55)
+    <<"strict-transport-security":utf8>>, _ -> NameMatch(56)
+    <<"transfer-encoding":utf8>>, _ -> NameMatch(57)
+    <<"user-agent":utf8>>, _ -> NameMatch(58)
+    <<"vary":utf8>>, _ -> NameMatch(59)
+    <<"via":utf8>>, _ -> NameMatch(60)
+    <<"www-authenticate":utf8>>, _ -> NameMatch(61)
     _, _ -> NoMatch
   }
 }
@@ -622,7 +620,7 @@ pub fn match_static(name: String, value: String) -> TableMatch {
 /// See: [RFC 7541 Section 2.3.2](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.2)
 pub opaque type DynamicTable {
   DynamicTable(
-    entries: List(#(String, String)),
+    entries: List(#(BitArray, String)),
     size: Int,
     max_size: Int,
     length: Int,
@@ -671,7 +669,7 @@ pub fn new_dynamic(max_size: Int) -> DynamicTable {
 /// See: [RFC 7541 Section 4.4](https://datatracker.ietf.org/doc/html/rfc7541#section-4.4)
 pub fn add_dynamic(
   table: DynamicTable,
-  name: String,
+  name: BitArray,
   value: String,
 ) -> DynamicTable {
   let entry_size = calculate_entry_size(name, value)
@@ -698,7 +696,7 @@ pub fn add_dynamic(
 pub fn lookup_dynamic(
   table: DynamicTable,
   index: Int,
-) -> Result(#(String, String), Nil) {
+) -> Result(#(BitArray, String), Nil) {
   case index < dynamic_table_start {
     True -> Error(Nil)
     False -> {
@@ -718,7 +716,7 @@ pub fn lookup_dynamic(
 /// See: [RFC 7541 Section 2.3.2](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.2)
 pub fn match_dynamic(
   table: DynamicTable,
-  name: String,
+  name: BitArray,
   value: String,
 ) -> TableMatch {
   case table.length {
@@ -728,8 +726,8 @@ pub fn match_dynamic(
 }
 
 fn do_match_dynamic(
-  entries: List(#(String, String)),
-  name: String,
+  entries: List(#(BitArray, String)),
+  name: BitArray,
   value: String,
   position: Int,
   match_accumulator: TableMatch,
@@ -806,12 +804,12 @@ fn evict_until_fits(table: DynamicTable, needed_space: Int) -> DynamicTable {
 }
 
 fn do_evict_until_fits(
-  reversed_entries: List(#(String, String)),
+  reversed_entries: List(#(BitArray, String)),
   size: Int,
   length: Int,
   needed_space: Int,
   max_size: Int,
-) -> #(List(#(String, String)), Int, Int) {
+) -> #(List(#(BitArray, String)), Int, Int) {
   case size + needed_space <= max_size {
     True -> #(reversed_entries, size, length)
     False ->
@@ -856,11 +854,11 @@ fn evict_to_size(table: DynamicTable, target_size: Int) -> DynamicTable {
 }
 
 fn do_evict_to_size(
-  reversed_entries: List(#(String, String)),
+  reversed_entries: List(#(BitArray, String)),
   size: Int,
   length: Int,
   target_size: Int,
-) -> #(List(#(String, String)), Int, Int) {
+) -> #(List(#(BitArray, String)), Int, Int) {
   case size <= target_size {
     True -> #(reversed_entries, size, length)
     False ->
@@ -880,8 +878,8 @@ fn do_evict_to_size(
 }
 
 // Calculates entry size per RFC 7541 Section 4.1: name + value + 32 bytes.
-fn calculate_entry_size(name: String, value: String) -> Int {
-  string.byte_size(name) + string.byte_size(value) + entry_overhead
+fn calculate_entry_size(name: BitArray, value: String) -> Int {
+  bit_array.byte_size(name) + string.byte_size(value) + entry_overhead
 }
 
 // Index Address Space (Section 2.3.3)
@@ -913,7 +911,7 @@ pub type TableMatch {
 /// See: [RFC 7541 Section 2.3.3](https://datatracker.ietf.org/doc/html/rfc7541#section-2.3.3)
 pub fn match(
   dynamic_table: DynamicTable,
-  name: String,
+  name: BitArray,
   value: String,
 ) -> TableMatch {
   case match_static(name, value) {
@@ -937,7 +935,7 @@ pub fn match(
 pub fn lookup(
   dynamic_table: DynamicTable,
   index: Int,
-) -> Result(#(String, String), Nil) {
+) -> Result(#(BitArray, String), Nil) {
   case index < dynamic_table_start {
     True -> lookup_static(index)
     False -> lookup_dynamic(dynamic_table, index)
@@ -967,7 +965,7 @@ pub type Indexing {
 /// the `indexing` mode controls the wire representation. When decoding, it
 /// preserves the representation chosen by the sender.
 pub type HeaderField {
-  HeaderField(name: String, value: String, indexing: Indexing)
+  HeaderField(name: BitArray, value: String, indexing: Indexing)
 }
 
 /// Decodes a complete header block fragment into a list of header fields,
@@ -1094,18 +1092,13 @@ fn decode_literal(
   data: BitArray,
   table: DynamicTable,
   prefix: Int,
-) -> Result(#(String, String, BitArray), DecodeError) {
+) -> Result(#(BitArray, String, BitArray), DecodeError) {
   use #(index, remaining) <- result.try(decode_integer(data, prefix))
 
   use #(name, remaining) <- result.try(case index {
     // That is a new string literal.
     0 -> {
       use #(name, remaining) <- result.try(decode_string_literal(remaining))
-      use name <- result.try(
-        bit_array.to_string(name)
-        |> result.replace_error(InvalidHeaderName),
-      )
-
       Ok(#(name, remaining))
     }
     // That is a name from the table.
@@ -1282,14 +1275,14 @@ fn encode_literal(
 
 // 6.2.x Literal Header Field with new name.
 fn encode_literal_new_name(
-  name: String,
+  name: BitArray,
   value: String,
   prefix: Int,
   type_bits: Int,
   huffman: Bool,
 ) -> BitArray {
   let index = encode_prefixed_integer(0, prefix, type_bits)
-  let name = encode_string_literal(<<name:utf8>>, huffman:)
+  let name = encode_string_literal(name, huffman:)
   let value = encode_string_literal(<<value:utf8>>, huffman:)
   <<index:bits, name:bits, value:bits>>
 }
