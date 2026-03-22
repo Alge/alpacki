@@ -252,6 +252,17 @@ pub fn decode_consecutive_size_updates_test() {
   assert alpacki.dynamic_max_size(table) == 128
 }
 
+pub fn decode_expected_size_update_present_test() {
+  let table =
+    alpacki.new_dynamic(4096)
+    |> alpacki.expect_table_size_update
+  let assert Ok(#(headers, table)) =
+    alpacki.decode_header_block(<<0x3f, 0x61, 0x82>>, table)
+  assert headers
+    == [alpacki.HeaderField(":method", "GET", alpacki.WithIndexing)]
+  assert alpacki.dynamic_max_size(table) == 128
+}
+
 // Errors
 // -----------------------------------------------------------------------------
 
@@ -291,6 +302,14 @@ pub fn decode_opaque_header_name_test() {
     == [
       alpacki.HeaderField(<<"FOO":utf8>>, <<"bar":utf8>>, alpacki.WithIndexing),
     ]
+}
+
+pub fn decode_missing_expected_size_update_test() {
+  let table =
+    alpacki.new_dynamic(4096)
+    |> alpacki.expect_table_size_update
+  assert alpacki.decode_header_block(<<0x82>>, table)
+    == Error(alpacki.MissingSizeUpdate)
 }
 
 // Encode

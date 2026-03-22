@@ -125,6 +125,9 @@ pub type DecodeError {
   InvalidTableIndex
   /// Huffman-encoded data was malformed or had invalid padding.
   InvalidHuffmanEncoding
+  /// A required Dynamic Table Size Update was not found at the start of the
+  /// header block.
+  MissingSizeUpdate
 }
 
 // Integer and String Representations (Section 5)
@@ -622,6 +625,7 @@ pub opaque type DynamicTable {
     max_size: Int,
     length: Int,
     pending_resize: Option(Int),
+    pending_size_update: Bool,
   )
 }
 
@@ -656,7 +660,14 @@ pub fn dynamic_length(table: DynamicTable) -> Int {
 ///
 /// See: [RFC 7541 Section 4.2](https://datatracker.ietf.org/doc/html/rfc7541#section-4.2)
 pub fn new_dynamic(max_size: Int) -> DynamicTable {
-  DynamicTable(entries: [], size: 0, max_size:, length: 0, pending_resize: None)
+  DynamicTable(
+    entries: [],
+    size: 0,
+    max_size:,
+    length: 0,
+    pending_resize: None,
+    pending_size_update: False,
+  )
 }
 
 /// Adds an entry to the dynamic table at index 62. Evicts oldest entries if
@@ -768,6 +779,14 @@ pub fn resize_dynamic(table: DynamicTable, new_max_size: Int) -> DynamicTable {
     max_size: new_max_size,
     pending_resize: Some(pending),
   )
+}
+
+/// Marks the decoder table as expecting a Dynamic Table Size Update
+/// instruction at the start of the next header block.
+///
+/// See: [RFC 7541 Section 4.2](https://datatracker.ietf.org/doc/html/rfc7541#section-4.2)
+pub fn expect_table_size_update(table: DynamicTable) -> DynamicTable {
+  DynamicTable(..table, pending_size_update: True)
 }
 
 /// Removes all entries from the dynamic table while preserving the maximum
@@ -1018,10 +1037,18 @@ fn decode_size_updates(
     <<0:2, 1:1, _:5, _:bits>> -> {
       use #(new_size, remaining) <- result.try(decode_integer(data, 5))
       let table =
-        DynamicTable(..evict_to_size(table, new_size), max_size: new_size)
+        DynamicTable(
+          ..evict_to_size(table, new_size),
+          max_size: new_size,
+          pending_size_update: False,
+        )
       decode_size_updates(remaining, table)
     }
-    _ -> Ok(#(data, table))
+    _ ->
+      case table.pending_size_update {
+        True -> Error(MissingSizeUpdate)
+        False -> Ok(#(data, table))
+      }
   }
 }
 
