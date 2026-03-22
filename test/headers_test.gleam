@@ -195,14 +195,16 @@ pub fn decode_indexed_zero_test() {
     == Error(alpacki.InvalidTableIndex)
 }
 
-// Uppercase header name rejected by validate_header_name FFI
-pub fn decode_invalid_header_name_test() {
+// HPACK treats names as opaque octets (RFC 7541 Section 1.3)
+pub fn decode_opaque_header_name_test() {
   let table = alpacki.new_dynamic(4096)
-  assert alpacki.decode_header_block(
+  let assert Ok(#(headers, _table)) =
+    alpacki.decode_header_block(
       <<0x40, 0x03, "FOO":utf8, 0x03, "bar":utf8>>,
       table,
     )
-    == Error(alpacki.InvalidHeaderName)
+  assert headers
+    == [alpacki.HeaderField("FOO", "bar", alpacki.WithIndexing)]
 }
 
 // Encode
@@ -312,6 +314,18 @@ pub fn encode_literal_never_indexed_new_name_test() {
       False,
     )
   assert encoded == <<0x10, 0x08, "password":utf8, 0x06, "secret":utf8>>
+}
+
+// HPACK treats names as opaque octets (RFC 7541 Section 1.3)
+pub fn encode_uppercase_header_name_test() {
+  let table = alpacki.new_dynamic(4096)
+  let #(encoded, _table) =
+    encode(
+      [alpacki.HeaderField("FOO", "bar", alpacki.WithIndexing)],
+      table,
+      False,
+    )
+  assert encoded == <<0x40, 0x03, "FOO":utf8, 0x03, "bar":utf8>>
 }
 
 // Sequential Requests (RFC 7541 C.3)

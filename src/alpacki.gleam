@@ -1102,7 +1102,7 @@ fn decode_literal(
     0 -> {
       use #(name, remaining) <- result.try(decode_string_literal(remaining))
       use name <- result.try(
-        validate_header_name(name)
+        bit_array.to_string(name)
         |> result.replace_error(InvalidHeaderName),
       )
 
@@ -1124,9 +1124,6 @@ fn decode_literal(
 
   Ok(#(name, value, remaining))
 }
-
-@external(erlang, "alpacki_ffi", "validate_header_name")
-fn validate_header_name(data: BitArray) -> Result(String, Nil)
 
 /// Encodes a list of header fields into a header block fragment, updating the
 /// dynamic table as entries are added. Returns the encoded block as a
