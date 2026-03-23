@@ -259,7 +259,13 @@ pub fn decode_expected_size_update_present_test() {
   let assert Ok(#(headers, table)) =
     alpacki.decode_header_block(<<0x3f, 0x61, 0x82>>, table)
   assert headers
-    == [alpacki.HeaderField(":method", "GET", alpacki.WithIndexing)]
+    == [
+      alpacki.HeaderField(
+        <<":method":utf8>>,
+        <<"GET":utf8>>,
+        alpacki.WithIndexing,
+      ),
+    ]
   assert alpacki.dynamic_max_size(table) == 128
 }
 
