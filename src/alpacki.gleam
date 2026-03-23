@@ -107,7 +107,6 @@
 
 import alpacki/internal/huffman
 import gleam/bit_array
-import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -1165,14 +1164,14 @@ pub fn encode_header_block(
   headers: List(HeaderField),
   dynamic_table: DynamicTable,
   huffman huffman: Bool,
-) -> #(BytesTree, DynamicTable) {
+) -> #(BitArray, DynamicTable) {
   let #(table, acc) = emit_pending_resizes(dynamic_table)
   encode_header_fields(headers, table, huffman, acc)
 }
 
-fn emit_pending_resizes(table: DynamicTable) -> #(DynamicTable, BytesTree) {
+fn emit_pending_resizes(table: DynamicTable) -> #(DynamicTable, BitArray) {
   case table.pending_resize {
-    None -> #(table, bytes_tree.new())
+    None -> #(table, <<>>)
     Some(min_size) -> {
       let table = DynamicTable(..table, pending_resize: None)
       case min_size < table.max_size {
@@ -1180,18 +1179,10 @@ fn emit_pending_resizes(table: DynamicTable) -> #(DynamicTable, BytesTree) {
         True -> {
           let first = encode_table_size_update(min_size)
           let second = encode_table_size_update(table.max_size)
-          #(
-            table,
-            bytes_tree.new()
-              |> bytes_tree.append(first)
-              |> bytes_tree.append(second),
-          )
+          #(table, <<first:bits, second:bits>>)
         }
         // Size only went down or stayed unchanged; emit final.
-        False -> #(
-          table,
-          encode_table_size_update(min_size) |> bytes_tree.from_bit_array,
-        )
+        False -> #(table, encode_table_size_update(min_size))
       }
     }
   }
@@ -1201,18 +1192,13 @@ fn encode_header_fields(
   headers: List(HeaderField),
   table: DynamicTable,
   huffman: Bool,
-  acc: BytesTree,
-) -> #(BytesTree, DynamicTable) {
+  acc: BitArray,
+) -> #(BitArray, DynamicTable) {
   case headers {
     [] -> #(acc, table)
     [header, ..remaining] -> {
       let #(encoded, table) = encode_header_field(header, table, huffman)
-      encode_header_fields(
-        remaining,
-        table,
-        huffman,
-        bytes_tree.append(acc, encoded),
-      )
+      encode_header_fields(remaining, table, huffman, <<acc:bits, encoded:bits>>)
     }
   }
 }
