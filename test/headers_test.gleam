@@ -16,7 +16,11 @@ pub fn decode_literal_with_indexing_new_name_test() {
     )
   assert headers
     == [
-      alpacki.HeaderField(<<"custom-key":utf8>>, <<"custom-header":utf8>>, alpacki.WithIndexing),
+      alpacki.HeaderField(
+        <<"custom-key":utf8>>,
+        <<"custom-header":utf8>>,
+        alpacki.WithIndexing,
+      ),
     ]
   assert alpacki.dynamic_length(table) == 1
   assert alpacki.dynamic_size(table) == 55
@@ -28,7 +32,11 @@ pub fn decode_literal_without_indexing_indexed_name_test() {
     alpacki.decode_header_block(<<0x04, 0x0c, "/sample/path":utf8>>, table)
   assert headers
     == [
-      alpacki.HeaderField(<<":path":utf8>>, <<"/sample/path":utf8>>, alpacki.WithoutIndexing),
+      alpacki.HeaderField(
+        <<":path":utf8>>,
+        <<"/sample/path":utf8>>,
+        alpacki.WithoutIndexing,
+      ),
     ]
   assert alpacki.dynamic_length(table) == 0
 }
@@ -41,7 +49,13 @@ pub fn decode_literal_never_indexed_new_name_test() {
       table,
     )
   assert headers
-    == [alpacki.HeaderField(<<"password":utf8>>, <<"secret":utf8>>, alpacki.NeverIndexed)]
+    == [
+      alpacki.HeaderField(
+        <<"password":utf8>>,
+        <<"secret":utf8>>,
+        alpacki.NeverIndexed,
+      ),
+    ]
 }
 
 pub fn decode_indexed_test() {
@@ -49,7 +63,13 @@ pub fn decode_indexed_test() {
   let assert Ok(#(headers, _table)) =
     alpacki.decode_header_block(<<0x82>>, table)
   assert headers
-    == [alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing)]
+    == [
+      alpacki.HeaderField(
+        <<":method":utf8>>,
+        <<"GET":utf8>>,
+        alpacki.WithIndexing,
+      ),
+    ]
 }
 
 // Sequential Requests (RFC 7541 C.3)
@@ -65,10 +85,22 @@ pub fn decode_c3_sequential_requests_test() {
     )
   assert headers
     == [
-      alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing),
-      alpacki.HeaderField(<<":scheme":utf8>>, <<"http":utf8>>, alpacki.WithIndexing),
+      alpacki.HeaderField(
+        <<":method":utf8>>,
+        <<"GET":utf8>>,
+        alpacki.WithIndexing,
+      ),
+      alpacki.HeaderField(
+        <<":scheme":utf8>>,
+        <<"http":utf8>>,
+        alpacki.WithIndexing,
+      ),
       alpacki.HeaderField(<<":path":utf8>>, <<"/":utf8>>, alpacki.WithIndexing),
-      alpacki.HeaderField(<<":authority":utf8>>, <<"www.example.com":utf8>>, alpacki.WithIndexing),
+      alpacki.HeaderField(
+        <<":authority":utf8>>,
+        <<"www.example.com":utf8>>,
+        alpacki.WithIndexing,
+      ),
     ]
   assert alpacki.dynamic_length(table) == 1
   assert alpacki.dynamic_size(table) == 57
@@ -81,11 +113,27 @@ pub fn decode_c3_sequential_requests_test() {
     )
   assert headers
     == [
-      alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing),
-      alpacki.HeaderField(<<":scheme":utf8>>, <<"http":utf8>>, alpacki.WithIndexing),
+      alpacki.HeaderField(
+        <<":method":utf8>>,
+        <<"GET":utf8>>,
+        alpacki.WithIndexing,
+      ),
+      alpacki.HeaderField(
+        <<":scheme":utf8>>,
+        <<"http":utf8>>,
+        alpacki.WithIndexing,
+      ),
       alpacki.HeaderField(<<":path":utf8>>, <<"/":utf8>>, alpacki.WithIndexing),
-      alpacki.HeaderField(<<":authority":utf8>>, <<"www.example.com":utf8>>, alpacki.WithIndexing),
-      alpacki.HeaderField(<<"cache-control":utf8>>, <<"no-cache":utf8>>, alpacki.WithIndexing),
+      alpacki.HeaderField(
+        <<":authority":utf8>>,
+        <<"www.example.com":utf8>>,
+        alpacki.WithIndexing,
+      ),
+      alpacki.HeaderField(
+        <<"cache-control":utf8>>,
+        <<"no-cache":utf8>>,
+        alpacki.WithIndexing,
+      ),
     ]
   assert alpacki.dynamic_length(table) == 2
   assert alpacki.dynamic_size(table) == 110
@@ -101,11 +149,31 @@ pub fn decode_c3_sequential_requests_test() {
     )
   assert headers
     == [
-      alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing),
-      alpacki.HeaderField(<<":scheme":utf8>>, <<"https":utf8>>, alpacki.WithIndexing),
-      alpacki.HeaderField(<<":path":utf8>>, <<"/index.html":utf8>>, alpacki.WithIndexing),
-      alpacki.HeaderField(<<":authority":utf8>>, <<"www.example.com":utf8>>, alpacki.WithIndexing),
-      alpacki.HeaderField(<<"custom-key":utf8>>, <<"custom-value":utf8>>, alpacki.WithIndexing),
+      alpacki.HeaderField(
+        <<":method":utf8>>,
+        <<"GET":utf8>>,
+        alpacki.WithIndexing,
+      ),
+      alpacki.HeaderField(
+        <<":scheme":utf8>>,
+        <<"https":utf8>>,
+        alpacki.WithIndexing,
+      ),
+      alpacki.HeaderField(
+        <<":path":utf8>>,
+        <<"/index.html":utf8>>,
+        alpacki.WithIndexing,
+      ),
+      alpacki.HeaderField(
+        <<":authority":utf8>>,
+        <<"www.example.com":utf8>>,
+        alpacki.WithIndexing,
+      ),
+      alpacki.HeaderField(
+        <<"custom-key":utf8>>,
+        <<"custom-value":utf8>>,
+        alpacki.WithIndexing,
+      ),
     ]
   assert alpacki.dynamic_length(table) == 3
   assert alpacki.dynamic_size(table) == 164
@@ -126,7 +194,11 @@ pub fn decode_huffman_encoded_value_test() {
     )
   assert headers
     == [
-      alpacki.HeaderField(<<":authority":utf8>>, <<"www.example.com":utf8>>, alpacki.WithIndexing),
+      alpacki.HeaderField(
+        <<":authority":utf8>>,
+        <<"www.example.com":utf8>>,
+        alpacki.WithIndexing,
+      ),
     ]
 }
 
@@ -138,7 +210,13 @@ pub fn decode_size_update_before_headers_test() {
   let assert Ok(#(headers, table)) =
     alpacki.decode_header_block(<<0x3f, 0x61, 0x82>>, table)
   assert headers
-    == [alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing)]
+    == [
+      alpacki.HeaderField(
+        <<":method":utf8>>,
+        <<"GET":utf8>>,
+        alpacki.WithIndexing,
+      ),
+    ]
   assert alpacki.dynamic_max_size(table) == 128
 }
 
@@ -163,7 +241,13 @@ pub fn decode_consecutive_size_updates_test() {
   let assert Ok(#(headers, table)) =
     alpacki.decode_header_block(<<0x20, 0x3f, 0x61, 0x82>>, table)
   assert headers
-    == [alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing)]
+    == [
+      alpacki.HeaderField(
+        <<":method":utf8>>,
+        <<"GET":utf8>>,
+        alpacki.WithIndexing,
+      ),
+    ]
   assert alpacki.dynamic_length(table) == 0
   assert alpacki.dynamic_max_size(table) == 128
 }
@@ -204,7 +288,9 @@ pub fn decode_opaque_header_name_test() {
       table,
     )
   assert headers
-    == [alpacki.HeaderField(<<"FOO":utf8>>, <<"bar":utf8>>, alpacki.WithIndexing)]
+    == [
+      alpacki.HeaderField(<<"FOO":utf8>>, <<"bar":utf8>>, alpacki.WithIndexing),
+    ]
 }
 
 // Encode
@@ -222,7 +308,13 @@ pub fn encode_indexed_test() {
   let table = alpacki.new_dynamic(4096)
   let #(encoded, _table) =
     encode(
-      [alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing)],
+      [
+        alpacki.HeaderField(
+          <<":method":utf8>>,
+          <<"GET":utf8>>,
+          alpacki.WithIndexing,
+        ),
+      ],
       table,
       False,
     )
@@ -234,7 +326,13 @@ pub fn encode_full_match_ignores_indexing_test() {
   let table = alpacki.new_dynamic(4096)
   let #(encoded, _table) =
     encode(
-      [alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.NeverIndexed)],
+      [
+        alpacki.HeaderField(
+          <<":method":utf8>>,
+          <<"GET":utf8>>,
+          alpacki.NeverIndexed,
+        ),
+      ],
       table,
       False,
     )
@@ -245,7 +343,13 @@ pub fn encode_literal_with_indexing_indexed_name_test() {
   let table = alpacki.new_dynamic(4096)
   let #(encoded, table) =
     encode(
-      [alpacki.HeaderField(<<":status":utf8>>, <<"418":utf8>>, alpacki.WithIndexing)],
+      [
+        alpacki.HeaderField(
+          <<":status":utf8>>,
+          <<"418":utf8>>,
+          alpacki.WithIndexing,
+        ),
+      ],
       table,
       False,
     )
@@ -257,7 +361,13 @@ pub fn encode_literal_without_indexing_indexed_name_test() {
   let table = alpacki.new_dynamic(4096)
   let #(encoded, table) =
     encode(
-      [alpacki.HeaderField(<<":path":utf8>>, <<"/sample/path":utf8>>, alpacki.WithoutIndexing)],
+      [
+        alpacki.HeaderField(
+          <<":path":utf8>>,
+          <<"/sample/path":utf8>>,
+          alpacki.WithoutIndexing,
+        ),
+      ],
       table,
       False,
     )
@@ -269,7 +379,13 @@ pub fn encode_literal_never_indexed_indexed_name_test() {
   let table = alpacki.new_dynamic(4096)
   let #(encoded, table) =
     encode(
-      [alpacki.HeaderField(<<":status":utf8>>, <<"418":utf8>>, alpacki.NeverIndexed)],
+      [
+        alpacki.HeaderField(
+          <<":status":utf8>>,
+          <<"418":utf8>>,
+          alpacki.NeverIndexed,
+        ),
+      ],
       table,
       False,
     )
@@ -282,7 +398,11 @@ pub fn encode_literal_with_indexing_new_name_test() {
   let #(encoded, table) =
     encode(
       [
-        alpacki.HeaderField(<<"custom-key":utf8>>, <<"custom-header":utf8>>, alpacki.WithIndexing),
+        alpacki.HeaderField(
+          <<"custom-key":utf8>>,
+          <<"custom-header":utf8>>,
+          alpacki.WithIndexing,
+        ),
       ],
       table,
       False,
@@ -297,7 +417,13 @@ pub fn encode_literal_without_indexing_new_name_test() {
   let table = alpacki.new_dynamic(4096)
   let #(encoded, table) =
     encode(
-      [alpacki.HeaderField(<<"x-custom":utf8>>, <<"value":utf8>>, alpacki.WithoutIndexing)],
+      [
+        alpacki.HeaderField(
+          <<"x-custom":utf8>>,
+          <<"value":utf8>>,
+          alpacki.WithoutIndexing,
+        ),
+      ],
       table,
       False,
     )
@@ -309,7 +435,13 @@ pub fn encode_literal_never_indexed_new_name_test() {
   let table = alpacki.new_dynamic(4096)
   let #(encoded, _table) =
     encode(
-      [alpacki.HeaderField(<<"password":utf8>>, <<"secret":utf8>>, alpacki.NeverIndexed)],
+      [
+        alpacki.HeaderField(
+          <<"password":utf8>>,
+          <<"secret":utf8>>,
+          alpacki.NeverIndexed,
+        ),
+      ],
       table,
       False,
     )
@@ -321,7 +453,13 @@ pub fn encode_uppercase_header_name_test() {
   let table = alpacki.new_dynamic(4096)
   let #(encoded, _table) =
     encode(
-      [alpacki.HeaderField(<<"FOO":utf8>>, <<"bar":utf8>>, alpacki.WithIndexing)],
+      [
+        alpacki.HeaderField(
+          <<"FOO":utf8>>,
+          <<"bar":utf8>>,
+          alpacki.WithIndexing,
+        ),
+      ],
       table,
       False,
     )
@@ -337,9 +475,21 @@ pub fn encode_c3_sequential_requests_test() {
   let #(encoded, table) =
     encode(
       [
-        alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing),
-        alpacki.HeaderField(<<":scheme":utf8>>, <<"http":utf8>>, alpacki.WithIndexing),
-        alpacki.HeaderField(<<":path":utf8>>, <<"/":utf8>>, alpacki.WithIndexing),
+        alpacki.HeaderField(
+          <<":method":utf8>>,
+          <<"GET":utf8>>,
+          alpacki.WithIndexing,
+        ),
+        alpacki.HeaderField(
+          <<":scheme":utf8>>,
+          <<"http":utf8>>,
+          alpacki.WithIndexing,
+        ),
+        alpacki.HeaderField(
+          <<":path":utf8>>,
+          <<"/":utf8>>,
+          alpacki.WithIndexing,
+        ),
         alpacki.HeaderField(
           <<":authority":utf8>>,
           <<"www.example.com":utf8>>,
@@ -355,15 +505,31 @@ pub fn encode_c3_sequential_requests_test() {
   let #(encoded, table) =
     encode(
       [
-        alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing),
-        alpacki.HeaderField(<<":scheme":utf8>>, <<"http":utf8>>, alpacki.WithIndexing),
-        alpacki.HeaderField(<<":path":utf8>>, <<"/":utf8>>, alpacki.WithIndexing),
+        alpacki.HeaderField(
+          <<":method":utf8>>,
+          <<"GET":utf8>>,
+          alpacki.WithIndexing,
+        ),
+        alpacki.HeaderField(
+          <<":scheme":utf8>>,
+          <<"http":utf8>>,
+          alpacki.WithIndexing,
+        ),
+        alpacki.HeaderField(
+          <<":path":utf8>>,
+          <<"/":utf8>>,
+          alpacki.WithIndexing,
+        ),
         alpacki.HeaderField(
           <<":authority":utf8>>,
           <<"www.example.com":utf8>>,
           alpacki.WithIndexing,
         ),
-        alpacki.HeaderField(<<"cache-control":utf8>>, <<"no-cache":utf8>>, alpacki.WithIndexing),
+        alpacki.HeaderField(
+          <<"cache-control":utf8>>,
+          <<"no-cache":utf8>>,
+          alpacki.WithIndexing,
+        ),
       ],
       table,
       False,
@@ -374,15 +540,31 @@ pub fn encode_c3_sequential_requests_test() {
   let #(encoded, _table) =
     encode(
       [
-        alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing),
-        alpacki.HeaderField(<<":scheme":utf8>>, <<"https":utf8>>, alpacki.WithIndexing),
-        alpacki.HeaderField(<<":path":utf8>>, <<"/index.html":utf8>>, alpacki.WithIndexing),
+        alpacki.HeaderField(
+          <<":method":utf8>>,
+          <<"GET":utf8>>,
+          alpacki.WithIndexing,
+        ),
+        alpacki.HeaderField(
+          <<":scheme":utf8>>,
+          <<"https":utf8>>,
+          alpacki.WithIndexing,
+        ),
+        alpacki.HeaderField(
+          <<":path":utf8>>,
+          <<"/index.html":utf8>>,
+          alpacki.WithIndexing,
+        ),
         alpacki.HeaderField(
           <<":authority":utf8>>,
           <<"www.example.com":utf8>>,
           alpacki.WithIndexing,
         ),
-        alpacki.HeaderField(<<"custom-key":utf8>>, <<"custom-value":utf8>>, alpacki.WithIndexing),
+        alpacki.HeaderField(
+          <<"custom-key":utf8>>,
+          <<"custom-value":utf8>>,
+          alpacki.WithIndexing,
+        ),
       ],
       table,
       False,
@@ -427,7 +609,13 @@ pub fn encode_pending_resize_test() {
     |> alpacki.resize_dynamic(128)
   let #(encoded, table) =
     encode(
-      [alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing)],
+      [
+        alpacki.HeaderField(
+          <<":method":utf8>>,
+          <<"GET":utf8>>,
+          alpacki.WithIndexing,
+        ),
+      ],
       table,
       False,
     )
@@ -443,7 +631,13 @@ pub fn encode_pending_double_resize_test() {
     |> alpacki.resize_dynamic(128)
   let #(encoded, table) =
     encode(
-      [alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing)],
+      [
+        alpacki.HeaderField(
+          <<":method":utf8>>,
+          <<"GET":utf8>>,
+          alpacki.WithIndexing,
+        ),
+      ],
       table,
       False,
     )
@@ -455,7 +649,13 @@ pub fn encode_no_pending_resize_test() {
   let table = alpacki.new_dynamic(4096)
   let #(encoded, _table) =
     encode(
-      [alpacki.HeaderField(<<":method":utf8>>, <<"GET":utf8>>, alpacki.WithIndexing)],
+      [
+        alpacki.HeaderField(
+          <<":method":utf8>>,
+          <<"GET":utf8>>,
+          alpacki.WithIndexing,
+        ),
+      ],
       table,
       False,
     )
